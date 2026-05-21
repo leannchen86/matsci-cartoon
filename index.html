@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Materials Science Cartoons</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f6efe2;
+      --muted: rgba(246, 239, 226, 0.68);
+      --line: rgba(246, 239, 226, 0.18);
+      --panel: rgba(246, 239, 226, 0.08);
+      --panel-strong: rgba(246, 239, 226, 0.14);
+      --bg: #071010;
+      --teal: #16b7b8;
+      --mint: #55e2a3;
+      --amber: #e5754b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(85, 226, 163, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(22, 183, 184, 0.055) 1px, transparent 1px),
+        linear-gradient(145deg, rgba(22, 183, 184, 0.12), transparent 42%),
+        linear-gradient(315deg, rgba(229, 117, 75, 0.08), transparent 46%),
+        var(--bg);
+      background-size: 92px 92px, 92px 92px, auto, auto, auto;
+    }
+
+    main {
+      width: min(1120px, calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 72px 0;
+    }
+
+    header {
+      display: grid;
+      gap: 18px;
+      max-width: 760px;
+      margin-bottom: 42px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.6rem, 7vw, 6.4rem);
+      line-height: 0.92;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1.02rem, 2.4vw, 1.35rem);
+      line-height: 1.55;
+      max-width: 650px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+      gap: 16px;
+    }
+
+    .project {
+      position: relative;
+      min-height: 260px;
+      padding: 22px;
+      overflow: hidden;
+      color: inherit;
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
+    }
+
+    .project[href]:hover {
+      transform: translateY(-3px);
+      border-color: rgba(85, 226, 163, 0.58);
+      background: var(--panel-strong);
+    }
+
+    .project h2 {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      max-width: 12ch;
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    .project small {
+      position: relative;
+      z-index: 1;
+      max-width: 31ch;
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.45;
+    }
+
+    .status {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      z-index: 1;
+      color: var(--ink);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .micrograph {
+      position: absolute;
+      inset: 0;
+      opacity: 0.92;
+      pointer-events: none;
+    }
+
+    .micrograph::before,
+    .micrograph::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+    }
+
+    .micrograph::before {
+      width: 250px;
+      height: 250px;
+      right: -46px;
+      bottom: -72px;
+      border: 16px solid rgba(22, 183, 184, 0.72);
+      background:
+        radial-gradient(circle at 42% 35%, rgba(246, 239, 226, 0.72), transparent 0.34rem),
+        radial-gradient(circle at 70% 48%, rgba(246, 239, 226, 0.58), transparent 0.26rem),
+        radial-gradient(circle at 52% 66%, rgba(85, 226, 163, 0.44), transparent 0.28rem),
+        rgba(246, 239, 226, 0.18);
+      box-shadow: inset 0 0 48px rgba(0, 0, 0, 0.42);
+    }
+
+    .micrograph::after {
+      width: 190px;
+      height: 3px;
+      right: 4px;
+      bottom: 74px;
+      background: var(--mint);
+      box-shadow:
+        -28px -22px 0 var(--mint),
+        26px -42px 0 rgba(85, 226, 163, 0.7),
+        -58px 32px 0 rgba(85, 226, 163, 0.62),
+        -80px -64px 0 rgba(85, 226, 163, 0.48);
+      transform: rotate(-24deg);
+      filter: drop-shadow(0 0 10px rgba(85, 226, 163, 0.45));
+    }
+
+    .coming {
+      opacity: 0.66;
+    }
+
+    .coming .micrograph::before {
+      border-color: rgba(229, 117, 75, 0.58);
+      background:
+        linear-gradient(126deg, transparent 0 42%, rgba(246, 239, 226, 0.52) 42% 45%, transparent 45%),
+        rgba(246, 239, 226, 0.11);
+    }
+
+    .coming .micrograph::after {
+      background: var(--amber);
+      box-shadow:
+        28px -20px 0 rgba(229, 117, 75, 0.62),
+        -34px 36px 0 rgba(22, 183, 184, 0.48);
+    }
+
+    @media (max-width: 640px) {
+      main {
+        width: min(100% - 28px, 560px);
+        padding: 42px 0;
+      }
+
+      header {
+        margin-bottom: 28px;
+      }
+
+      .project {
+        min-height: 230px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Materials Science Cartoons</h1>
+      <p>Interactive visual explanations of materials behavior, organized as small topic folders.</p>
+    </header>
+
+    <section class="grid" aria-label="Project gallery">
+      <a class="project" href="tapioca/">
+        <span class="status">Live</span>
+        <span class="micrograph" aria-hidden="true"></span>
+        <h2>Tapioca Pearl Microstructure</h2>
+        <small>Starch chains, mobile water, cooling, and reheating inside a chewy pearl.</small>
+      </a>
+
+      <article class="project coming" aria-label="Prince Rupert's teardrop planned">
+        <span class="status">Planned</span>
+        <span class="micrograph" aria-hidden="true"></span>
+        <h2>Prince Rupert's Teardrop</h2>
+        <small>Future interactive layer for residual stress, compression, and fracture.</small>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
