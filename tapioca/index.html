@@ -426,6 +426,11 @@ input[type="range"] {
 }
 
 @media (max-width: 620px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
   .shell {
     padding: 14px;
   }
@@ -442,18 +447,29 @@ input[type="range"] {
   .controls {
     position: fixed;
     left: 10px;
-    right: 10px;
+    right: auto;
     bottom: max(10px, env(safe-area-inset-bottom));
     z-index: 8;
-    width: auto;
+    width: calc(100vw - 20px);
     max-width: none;
     max-height: min(46dvh, 360px);
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     overscroll-behavior: contain;
+    transform: translateY(0);
+    transition: transform 220ms ease, opacity 180ms ease, visibility 180ms ease;
   }
 
-  .controls {
-    margin-top: 0;
+  .control-collapse {
+    right: 8px;
+  }
+
+  body.controls-collapsed .controls {
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(calc(100% + 24px));
+    visibility: hidden;
   }
 
   .field {
@@ -480,8 +496,11 @@ input[type="range"] {
   }
 
   .control-peek {
-    top: 14px;
-    right: 14px;
+    top: auto;
+    right: auto;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
   }
 }
 </style>
