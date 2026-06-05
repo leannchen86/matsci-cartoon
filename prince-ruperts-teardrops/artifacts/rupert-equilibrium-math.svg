@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1050" viewBox="0 0 1700 1050">
+  <defs>
+    <marker id="cyanArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#7cf4ff"/>
+    </marker>
+    <marker id="orangeArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#ffb45f"/>
+    </marker>
+    <marker id="redArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#ff5e4d"/>
+    </marker>
+    <marker id="whiteArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#f2fdff"/>
+    </marker>
+    <radialGradient id="glass" cx="42%" cy="30%" r="74%">
+      <stop offset="0%" stop-color="#d9ffff" stop-opacity="0.92"/>
+      <stop offset="45%" stop-color="#5ce8f0" stop-opacity="0.34"/>
+      <stop offset="100%" stop-color="#0d3037" stop-opacity="0.93"/>
+    </radialGradient>
+    <radialGradient id="core" cx="52%" cy="50%" r="62%">
+      <stop offset="0%" stop-color="#ffc879" stop-opacity="0.92"/>
+      <stop offset="100%" stop-color="#451d14" stop-opacity="0.95"/>
+    </radialGradient>
+    <style>
+      .bg { fill: #05090b; }
+      .panel { fill: #081114; stroke: #244a52; stroke-width: 1.4; }
+      .card { fill: #0c171a; stroke: #335b63; stroke-width: 1.2; }
+      .title { fill: #f1fdff; font: 800 31px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .panelTitle { fill: #f1fdff; font: 800 25px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .label { fill: #dff7fb; font: 750 18px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .body { fill: #bfd9de; font: 650 15px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .small { fill: #9dbbc1; font: 650 13px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .eq { fill: #ffffff; font: 800 21px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .eqSmall { fill: #e6fbff; font: 750 17px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .cyanText { fill: #90f7ff; }
+      .orangeText { fill: #ffc37a; }
+      .redText { fill: #ff8c7b; }
+      .arrow { fill: none; stroke-width: 4.2; stroke-linecap: round; }
+      .thin { stroke-width: 2.6; }
+      .cyan { stroke: #7cf4ff; }
+      .orange { stroke: #ffb45f; }
+      .red { stroke: #ff5e4d; }
+      .white { stroke: #f2fdff; }
+      .dash { stroke-dasharray: 8 8; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1700" height="1050"/>
+  <text class="title" x="44" y="55">Prince Rupert's drop: force balance + stress math</text>
+  <text class="body" x="46" y="84">Toy numbers are chosen for easy arithmetic. The signs and equations are the important part.</text>
+
+  <!-- sign convention -->
+  <rect class="card" x="46" y="108" width="1608" height="70" rx="18"/>
+  <text class="eq" x="72" y="151">Sign convention:</text>
+  <text class="eqSmall cyanText" x="285" y="151">compression = negative stress</text>
+  <text class="eqSmall orangeText" x="610" y="151">tension = positive stress</text>
+  <text class="eqSmall" x="900" y="151">crack opens only when local normal stress is tensile: σcrack &gt; 0</text>
+
+  <!-- Panel 1: no external force -->
+  <rect class="panel" x="46" y="205" width="780" height="380" rx="24"/>
+  <text class="panelTitle" x="76" y="247">1. No external force: static but internally stressed</text>
+  <text class="body" x="78" y="274">The drop does not move because all internal pushes cancel in pairs.</text>
+
+  <circle cx="238" cy="390" r="112" fill="url(#glass)" stroke="#bdfbff" stroke-width="3"/>
+  <circle cx="238" cy="390" r="62" fill="url(#core)" stroke="#ffc37a" stroke-width="2"/>
+  <circle cx="238" cy="390" r="112" fill="none" stroke="#7cf4ff" stroke-width="28" opacity="0.2"/>
+  <path class="arrow cyan" marker-end="url(#cyanArrow)" d="M 238 230 L 238 297"/>
+  <path class="arrow cyan" marker-end="url(#cyanArrow)" d="M 398 390 L 333 390"/>
+  <path class="arrow cyan" marker-end="url(#cyanArrow)" d="M 238 550 L 238 483"/>
+  <path class="arrow cyan" marker-end="url(#cyanArrow)" d="M 78 390 L 143 390"/>
+  <path class="arrow orange thin" marker-end="url(#orangeArrow)" d="M 238 390 L 238 329"/>
+  <path class="arrow orange thin" marker-end="url(#orangeArrow)" d="M 238 390 L 299 390"/>
+  <path class="arrow orange thin" marker-end="url(#orangeArrow)" d="M 238 390 L 238 451"/>
+  <path class="arrow orange thin" marker-end="url(#orangeArrow)" d="M 238 390 L 177 390"/>
+  <text class="small cyanText" x="238" y="525" text-anchor="middle">compressed shell</text>
+  <text class="small orangeText" x="238" y="340" text-anchor="middle">tensile core</text>
+
+  <rect class="card" x="450" y="300" width="340" height="210" rx="18"/>
+  <text class="eqSmall" x="474" y="335">Toy stress balance across a section:</text>
+  <text class="eq" x="474" y="374">ΣFinternal = σs As + σc Ac</text>
+  <text class="eqSmall cyanText" x="474" y="415">shell: σs = −100 MPa, As = 1</text>
+  <text class="eqSmall orangeText" x="474" y="448">core: σc = +40 MPa, Ac = 2.5</text>
+  <text class="eq" x="474" y="489">−100(1) + 40(2.5) = 0</text>
+  <text class="small" x="474" y="524">Huge internal stress, but no net external force.</text>
+  <text class="eq" x="76" y="555">Whole-drop equilibrium: ΣFexternal = 0</text>
+
+  <!-- Panel 2: push on bulb -->
+  <rect class="panel" x="874" y="205" width="780" height="380" rx="24"/>
+  <text class="panelTitle" x="904" y="247">2. Push on the bulb: external force becomes added compression</text>
+  <text class="body" x="906" y="274">Pressing inward does not pull a surface crack open; it makes the local shell more compressed.</text>
+
+  <circle cx="1052" cy="390" r="108" fill="url(#glass)" stroke="#bdfbff" stroke-width="3"/>
+  <circle cx="1052" cy="390" r="60" fill="url(#core)" stroke="#ffc37a" stroke-width="2" opacity="0.7"/>
+  <circle cx="1052" cy="390" r="108" fill="none" stroke="#7cf4ff" stroke-width="30" opacity="0.24"/>
+  <rect x="944" y="514" width="216" height="22" rx="8" fill="#15292e" stroke="#54757d"/>
+  <path class="arrow red" marker-end="url(#redArrow)" d="M 1052 224 L 1052 296"/>
+  <text class="label redText" x="1072" y="242">F = 50 N</text>
+  <path class="arrow white" marker-end="url(#whiteArrow)" d="M 1052 590 L 1052 538"/>
+  <text class="label" x="1071" y="585">R = 50 N</text>
+  <path class="arrow cyan thin dash" d="M 960 328 C 1014 292, 1086 292, 1144 328"/>
+  <path class="arrow cyan thin dash" d="M 948 422 C 1015 452, 1085 452, 1155 422"/>
+  <text class="small cyanText" x="1052" y="316" text-anchor="middle">load spreads as compression</text>
+
+  <rect class="card" x="1222" y="304" width="390" height="235" rx="18"/>
+  <text class="eqSmall" x="1246" y="338">Local contact calculation:</text>
+  <text class="eq" x="1246" y="377">p = F / A</text>
+  <text class="eqSmall" x="1246" y="415">A = 10 mm² = 1×10⁻⁵ m²</text>
+  <text class="eq" x="1246" y="454">p = 50 / 1×10⁻⁵ = 5 MPa</text>
+  <text class="eqSmall cyanText" x="1246" y="493">Δσsurface ≈ −p = −5 MPa</text>
+  <text class="eq" x="1246" y="531">σtotal = −100 − 5 = −105 MPa</text>
+  <text class="eq" x="904" y="555">Static press balance: ΣFy = R − F = 0</text>
+
+  <!-- Panel 3: why material can push back -->
+  <rect class="panel" x="46" y="625" width="780" height="365" rx="24"/>
+  <text class="panelTitle" x="76" y="667">3. What enables “extra compression”?</text>
+  <text class="body" x="78" y="694">Glass is elastic for tiny deformations. Atomic bonds act like extremely stiff springs.</text>
+
+  <rect class="card" x="86" y="735" width="325" height="155" rx="18"/>
+  <text class="eq" x="112" y="780">Hooke's law for solids</text>
+  <text class="eq" x="112" y="822">σ = E ε</text>
+  <text class="eqSmall" x="112" y="861">Eglass ≈ 70 GPa</text>
+  <text class="small" x="112" y="895">stress = stiffness × tiny strain</text>
+
+  <rect class="card" x="452" y="735" width="325" height="155" rx="18"/>
+  <text class="eq" x="478" y="778">ε = σ / E</text>
+  <text class="eqSmall" x="478" y="818">ε = 5 MPa / 70 GPa</text>
+  <text class="eq" x="478" y="858">ε ≈ 7×10⁻⁵</text>
+  <text class="small" x="478" y="895">Only 0.007% strain creates 5 MPa pushback.</text>
+
+  <path class="arrow cyan" marker-end="url(#cyanArrow)" d="M 190 930 C 330 980, 520 980, 660 930"/>
+  <text class="label" x="426" y="947" text-anchor="middle">tiny deformation → restoring force</text>
+
+  <!-- Panel 4: tail -->
+  <rect class="panel" x="874" y="625" width="780" height="365" rx="24"/>
+  <text class="panelTitle" x="904" y="667">4. Tail case: bending creates tensile stress and opens the core</text>
+  <text class="body" x="906" y="694">The tail is thin, so the same small force can create a huge bending stress.</text>
+
+  <path d="M 982 816 C 934 794, 936 724, 988 698 C 1052 667, 1115 711, 1098 770 C 1086 812, 1064 825, 1029 828 C 1100 834, 1194 848, 1305 862" fill="none" stroke="#8ff7ff" stroke-width="46" stroke-linecap="round" opacity="0.28"/>
+  <path d="M 982 816 C 934 794, 936 724, 988 698 C 1052 667, 1115 711, 1098 770 C 1086 812, 1064 825, 1029 828 C 1100 834, 1194 848, 1305 862" fill="none" stroke="#d0ffff" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
+  <circle cx="1024" cy="759" r="52" fill="url(#core)" opacity="0.65"/>
+  <path d="M 1305 862 L 1265 850 L 1234 862 L 1201 842 L 1168 854 L 1132 836 L 1090 818 L 1035 780" fill="none" stroke="#ff5e4d" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="1305" cy="862" r="14" fill="#ff5e4d"/>
+  <text class="small redText" x="1175" y="904">crack reaches tensile core</text>
+
+  <rect class="card" x="1340" y="723" width="280" height="192" rx="18"/>
+  <text class="eqSmall" x="1362" y="755">Circular tail bending:</text>
+  <text class="eq" x="1362" y="793">σbend = M c / I</text>
+  <text class="eqSmall" x="1362" y="826">I = πr⁴/4, c = r</text>
+  <text class="eq" x="1362" y="864">σbend = 4 F L / πr³</text>
+  <text class="small" x="1362" y="895">Tiny r makes stress explode.</text>
+
+  <rect class="card" x="904" y="913" width="716" height="54" rx="16"/>
+  <text class="eqSmall" x="928" y="948">Example: F=1 N, L=5 mm, r=0.2 mm → σbend ≈ 800 MPa; tensile core helps crack grow.</text>
+</svg>

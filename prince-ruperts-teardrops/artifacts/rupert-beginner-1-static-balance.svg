@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="720" viewBox="0 0 1100 720">
+  <defs>
+    <marker id="cyanArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#7cf4ff"/>
+    </marker>
+    <marker id="orangeArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#ffb45f"/>
+    </marker>
+    <radialGradient id="glass" cx="42%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#d8ffff" stop-opacity="0.95"/>
+      <stop offset="48%" stop-color="#5be8ef" stop-opacity="0.36"/>
+      <stop offset="100%" stop-color="#0d3037" stop-opacity="0.94"/>
+    </radialGradient>
+    <radialGradient id="core" cx="50%" cy="50%" r="58%">
+      <stop offset="0%" stop-color="#ffc879" stop-opacity="0.92"/>
+      <stop offset="100%" stop-color="#451d14" stop-opacity="0.95"/>
+    </radialGradient>
+    <style>
+      .bg { fill: #05090b; }
+      .panel { fill: #081114; stroke: #28515a; stroke-width: 1.5; }
+      .title { fill: #f2fdff; font: 800 34px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .subtitle { fill: #b8d3d9; font: 650 18px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .label { fill: #e8fbff; font: 800 24px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .small { fill: #b8d3d9; font: 650 17px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .math { fill: #ffffff; font: 850 25px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .cyanText { fill: #93f8ff; }
+      .orangeText { fill: #ffc879; }
+      .arrow { fill: none; stroke-width: 5; stroke-linecap: round; }
+      .cyan { stroke: #7cf4ff; }
+      .orange { stroke: #ffb45f; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1100" height="720"/>
+  <rect class="panel" x="32" y="32" width="1036" height="656" rx="24"/>
+
+  <text class="title" x="62" y="86">1. No touch: why the drop can sit still</text>
+  <text class="subtitle" x="64" y="120">Still does not mean force-free. It means the forces add up to zero.</text>
+
+  <circle cx="310" cy="355" r="170" fill="url(#glass)" stroke="#bdfbff" stroke-width="4"/>
+  <circle cx="310" cy="355" r="95" fill="url(#core)" stroke="#ffc879" stroke-width="3"/>
+  <circle cx="310" cy="355" r="170" fill="none" stroke="#7cf4ff" stroke-width="40" opacity="0.18"/>
+
+  <path class="arrow cyan" marker-end="url(#cyanArrow)" d="M310 125 L310 245"/>
+  <path class="arrow cyan" marker-end="url(#cyanArrow)" d="M540 355 L420 355"/>
+  <path class="arrow cyan" marker-end="url(#cyanArrow)" d="M310 585 L310 465"/>
+  <path class="arrow cyan" marker-end="url(#cyanArrow)" d="M80 355 L200 355"/>
+
+  <path class="arrow orange" marker-end="url(#orangeArrow)" d="M310 355 L310 265"/>
+  <path class="arrow orange" marker-end="url(#orangeArrow)" d="M310 355 L400 355"/>
+  <path class="arrow orange" marker-end="url(#orangeArrow)" d="M310 355 L310 445"/>
+  <path class="arrow orange" marker-end="url(#orangeArrow)" d="M310 355 L220 355"/>
+
+  <text class="label cyanText" x="310" y="620" text-anchor="middle">outside layer squeezes inward</text>
+  <text class="label orangeText" x="310" y="248" text-anchor="middle">inside pushes outward</text>
+
+  <rect x="650" y="188" width="360" height="330" rx="20" fill="#0c171a" stroke="#335b63"/>
+  <text class="label" x="682" y="236">Simple number picture</text>
+  <text class="math cyanText" x="682" y="292">outside squeeze = -100</text>
+  <text class="math orangeText" x="682" y="340">inside pull = +100</text>
+  <line x1="682" y1="366" x2="970" y2="366" stroke="#456b73" stroke-width="2"/>
+  <text class="math" x="682" y="414">total inside = 0</text>
+  <text class="small" x="682" y="465">The forces are internal pairs.</text>
+  <text class="small" x="682" y="493">They store energy, but they do</text>
+  <text class="small" x="682" y="521">not move the whole drop.</text>
+
+  <rect x="650" y="545" width="360" height="70" rx="18" fill="#101e22" stroke="#426a72"/>
+  <text class="math" x="830" y="590" text-anchor="middle">sum F on whole drop = 0</text>
+</svg>

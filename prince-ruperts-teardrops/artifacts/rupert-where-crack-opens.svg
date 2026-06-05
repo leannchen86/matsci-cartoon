@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <defs>
+    <marker id="cyanArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#7cf4ff"/>
+    </marker>
+    <marker id="orangeArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#ffb45f"/>
+    </marker>
+    <marker id="redArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#ff5e4d"/>
+    </marker>
+    <radialGradient id="glass" cx="42%" cy="30%" r="72%">
+      <stop offset="0%" stop-color="#d7ffff" stop-opacity="0.95"/>
+      <stop offset="48%" stop-color="#58e4ed" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#0d3037" stop-opacity="0.94"/>
+    </radialGradient>
+    <style>
+      .bg { fill: #05090b; }
+      .panel { fill: #081114; stroke: #28515a; stroke-width: 1.5; }
+      .card { fill: #0c171a; stroke: #335b63; stroke-width: 1.2; }
+      .title { fill: #f2fdff; font: 800 32px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .label { fill: #e8fbff; font: 800 23px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .small { fill: #bdd7dc; font: 650 17px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .math { fill: #ffffff; font: 850 24px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .cyanText { fill: #93f8ff; }
+      .orangeText { fill: #ffc879; }
+      .redText { fill: #ff9b8d; }
+      .arrow { fill: none; stroke-width: 5; stroke-linecap: round; }
+      .thin { stroke-width: 3; }
+      .cyan { stroke: #7cf4ff; }
+      .orange { stroke: #ffb45f; }
+      .red { stroke: #ff5e4d; }
+      .dash { stroke-dasharray: 8 8; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="760"/>
+  <rect class="panel" x="34" y="32" width="1132" height="696" rx="24"/>
+  <text class="title" x="66" y="86">Squeezing does not open the squeezed crack. It can open a different stretched spot.</text>
+
+  <!-- Left panel: direct squeeze closes crack -->
+  <rect class="card" x="70" y="130" width="330" height="510" rx="22"/>
+  <text class="label" x="100" y="176">A. Pure squeeze</text>
+  <text class="small" x="100" y="205">The crack faces are pushed together.</text>
+  <rect x="160" y="300" width="150" height="155" rx="18" fill="#12343b" stroke="#a9f5ff" stroke-width="3"/>
+  <line x1="235" y1="310" x2="235" y2="445" stroke="#ff705f" stroke-width="6" stroke-linecap="round"/>
+  <path class="arrow cyan" marker-end="url(#cyanArrow)" d="M112 378 L196 378"/>
+  <path class="arrow cyan" marker-end="url(#cyanArrow)" d="M358 378 L274 378"/>
+  <text class="label cyanText" x="235" y="510" text-anchor="middle">closed</text>
+  <text class="math" x="106" y="570">opening = pull - squeeze</text>
+  <text class="math cyanText" x="106" y="610">opening &lt; 0</text>
+
+  <!-- Middle panel: press bulb creates tension elsewhere -->
+  <rect class="card" x="435" y="130" width="330" height="510" rx="22"/>
+  <text class="label" x="465" y="176">B. Push a bulb</text>
+  <text class="small" x="465" y="205">The contact spot is squeezed.</text>
+  <circle cx="600" cy="370" r="130" fill="url(#glass)" stroke="#bdfbff" stroke-width="4"/>
+  <path class="arrow red" marker-end="url(#redArrow)" d="M600 196 L600 285"/>
+  <text class="small redText" x="620" y="238">push</text>
+  <path class="arrow cyan thin" marker-end="url(#cyanArrow)" d="M600 286 C586 320 575 342 566 366"/>
+  <path class="arrow cyan thin" marker-end="url(#cyanArrow)" d="M600 286 C614 320 625 342 634 366"/>
+  <path class="arrow orange dash" d="M485 410 C545 458 655 458 715 410"/>
+  <text class="small orangeText" x="600" y="492" text-anchor="middle">nearby area can stretch</text>
+  <line x1="600" y1="438" x2="600" y2="476" stroke="#ff705f" stroke-width="5" stroke-linecap="round"/>
+  <path class="arrow orange thin" marker-end="url(#orangeArrow)" d="M600 457 L548 457"/>
+  <path class="arrow orange thin" marker-end="url(#orangeArrow)" d="M600 457 L652 457"/>
+  <text class="label orangeText" x="600" y="560" text-anchor="middle">possible open spot</text>
+  <text class="small" x="482" y="610">Not because the push point opened.</text>
+
+  <!-- Right panel: bend example -->
+  <rect class="card" x="800" y="130" width="330" height="510" rx="22"/>
+  <text class="label" x="830" y="176">C. Bending example</text>
+  <text class="small" x="830" y="205">One side squeezes, the other side stretches.</text>
+  <path d="M870 385 C930 315 1000 315 1060 385" fill="none" stroke="#7cf4ff" stroke-width="48" stroke-linecap="round" opacity="0.32"/>
+  <path d="M870 385 C930 315 1000 315 1060 385" fill="none" stroke="#bdfbff" stroke-width="5" stroke-linecap="round"/>
+  <text class="small cyanText" x="965" y="298" text-anchor="middle">top squeezed</text>
+  <text class="small orangeText" x="965" y="452" text-anchor="middle">bottom stretched</text>
+  <line x1="965" y1="410" x2="965" y2="462" stroke="#ff705f" stroke-width="6" stroke-linecap="round"/>
+  <path class="arrow orange thin" marker-end="url(#orangeArrow)" d="M965 438 L900 438"/>
+  <path class="arrow orange thin" marker-end="url(#orangeArrow)" d="M965 438 L1030 438"/>
+  <text class="label orangeText" x="965" y="525" text-anchor="middle">crack opens here</text>
+  <text class="math" x="840" y="584">opening &gt; 0</text>
+  <text class="small" x="840" y="615">Only the stretched side opens.</text>
+</svg>

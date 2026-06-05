@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="720" viewBox="0 0 1100 720">
+  <defs>
+    <marker id="redArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#ff5e4d"/>
+    </marker>
+    <marker id="cyanArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#7cf4ff"/>
+    </marker>
+    <marker id="whiteArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#f2fdff"/>
+    </marker>
+    <radialGradient id="glass" cx="42%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#d8ffff" stop-opacity="0.95"/>
+      <stop offset="48%" stop-color="#5be8ef" stop-opacity="0.36"/>
+      <stop offset="100%" stop-color="#0d3037" stop-opacity="0.94"/>
+    </radialGradient>
+    <style>
+      .bg { fill: #05090b; }
+      .panel { fill: #081114; stroke: #28515a; stroke-width: 1.5; }
+      .title { fill: #f2fdff; font: 800 34px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .subtitle { fill: #b8d3d9; font: 650 18px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .label { fill: #e8fbff; font: 800 24px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .small { fill: #b8d3d9; font: 650 17px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .math { fill: #ffffff; font: 850 24px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .cyanText { fill: #93f8ff; }
+      .redText { fill: #ff9b8d; }
+      .arrow { fill: none; stroke-width: 5; stroke-linecap: round; }
+      .thin { stroke-width: 3; }
+      .cyan { stroke: #7cf4ff; }
+      .red { stroke: #ff5e4d; }
+      .white { stroke: #f2fdff; }
+      .dash { stroke-dasharray: 8 8; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1100" height="720"/>
+  <rect class="panel" x="32" y="32" width="1036" height="656" rx="24"/>
+
+  <text class="title" x="62" y="86">2. Push the bulb: where does the force go?</text>
+  <text class="subtitle" x="64" y="120">The push becomes more local squeezing at the surface. A crack is still being held shut.</text>
+
+  <circle cx="310" cy="360" r="160" fill="url(#glass)" stroke="#bdfbff" stroke-width="4"/>
+  <circle cx="310" cy="360" r="160" fill="none" stroke="#7cf4ff" stroke-width="42" opacity="0.22"/>
+  <rect x="170" y="535" width="280" height="28" rx="10" fill="#14282d" stroke="#5b858d"/>
+
+  <path class="arrow red" marker-end="url(#redArrow)" d="M310 125 L310 235"/>
+  <text class="label redText" x="332" y="160">push down: F = 50 N</text>
+
+  <path class="arrow white" marker-end="url(#whiteArrow)" d="M310 625 L310 565"/>
+  <text class="label" x="332" y="620">table pushes up: R = 50 N</text>
+
+  <path class="arrow cyan" marker-end="url(#cyanArrow)" d="M310 235 C294 270 285 298 278 324"/>
+  <path class="arrow cyan" marker-end="url(#cyanArrow)" d="M310 235 C326 270 335 298 342 324"/>
+  <path class="arrow cyan thin dash" d="M190 310 C255 270 365 270 430 310"/>
+  <path class="arrow cyan thin dash" d="M180 405 C255 438 365 438 440 405"/>
+  <text class="label cyanText" x="310" y="288" text-anchor="middle">extra squeeze</text>
+
+  <rect x="620" y="165" width="410" height="210" rx="20" fill="#0c171a" stroke="#335b63"/>
+  <text class="label" x="650" y="212">Whole object stays still</text>
+  <text class="math" x="650" y="265">sum F = up - down</text>
+  <text class="math" x="650" y="315">sum F = 50 - 50 = 0</text>
+  <text class="small" x="650" y="350">So the drop does not accelerate.</text>
+
+  <rect x="620" y="405" width="410" height="210" rx="20" fill="#0c171a" stroke="#335b63"/>
+  <text class="label" x="650" y="452">At the contact spot</text>
+  <text class="math" x="650" y="500">squeeze added = F / area</text>
+  <text class="math" x="650" y="548">= 50 N / 10 mm^2</text>
+  <text class="math cyanText" x="650" y="596">= 5 N/mm^2 more squeeze</text>
+
+  <rect x="92" y="610" width="430" height="52" rx="16" fill="#101e22" stroke="#426a72"/>
+  <text class="math" x="307" y="645" text-anchor="middle">-100 + (-5) = -105</text>
+</svg>

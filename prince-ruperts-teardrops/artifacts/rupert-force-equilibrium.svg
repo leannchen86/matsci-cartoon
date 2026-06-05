@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="920" viewBox="0 0 1500 920">
+  <defs>
+    <marker id="arrowCyan" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#7cf4ff"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#ffb45f"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#ff5e4d"/>
+    </marker>
+    <marker id="arrowWhite" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#f1fdff"/>
+    </marker>
+    <radialGradient id="glassBulb" cx="42%" cy="32%" r="70%">
+      <stop offset="0%" stop-color="#c9ffff" stop-opacity="0.9"/>
+      <stop offset="48%" stop-color="#4bd4df" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#0f3037" stop-opacity="0.92"/>
+    </radialGradient>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="58%">
+      <stop offset="0%" stop-color="#ffc47a" stop-opacity="0.92"/>
+      <stop offset="100%" stop-color="#4a2117" stop-opacity="0.92"/>
+    </radialGradient>
+    <style>
+      .bg { fill: #05090b; }
+      .panel { fill: #081114; stroke: #224a52; stroke-width: 1.4; }
+      .title { fill: #f0fdff; font: 800 27px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .subtitle { fill: #9fbfc5; font: 700 15px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .label { fill: #dff6fa; font: 700 18px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .small { fill: #b7d4d9; font: 600 14px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .tiny { fill: #94b6bd; font: 600 12px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .math { fill: #f6fdff; font: 800 20px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .cyan { stroke: #7cf4ff; }
+      .orange { stroke: #ffb45f; }
+      .red { stroke: #ff5e4d; }
+      .white { stroke: #f1fdff; }
+      .arrow { fill: none; stroke-width: 4; stroke-linecap: round; }
+      .thin { stroke-width: 2.2; }
+      .dash { stroke-dasharray: 8 8; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1500" height="920"/>
+  <text class="title" x="42" y="52">Prince Rupert's Drop: force balance, in physics-class language</text>
+  <text class="subtitle" x="44" y="80">Internal forces can be huge while the outside object stays still, because the forces balance in pairs.</text>
+
+  <!-- Panel 1 -->
+  <rect class="panel" x="40" y="115" width="455" height="725" rx="22"/>
+  <text class="title" x="68" y="158">1. No external force</text>
+  <text class="subtitle" x="70" y="184">Static because net force is zero</text>
+
+  <circle cx="268" cy="370" r="150" fill="url(#glassBulb)" stroke="#b9fbff" stroke-width="3"/>
+  <circle cx="268" cy="370" r="86" fill="url(#coreGlow)" stroke="#ffc478" stroke-width="2"/>
+  <circle cx="268" cy="370" r="150" fill="none" stroke="#7cf4ff" stroke-width="34" opacity="0.18"/>
+
+  <!-- inward compression shell arrows -->
+  <path class="arrow cyan" marker-end="url(#arrowCyan)" d="M 268 168 L 268 238"/>
+  <path class="arrow cyan" marker-end="url(#arrowCyan)" d="M 470 370 L 400 370"/>
+  <path class="arrow cyan" marker-end="url(#arrowCyan)" d="M 268 572 L 268 502"/>
+  <path class="arrow cyan" marker-end="url(#arrowCyan)" d="M 66 370 L 136 370"/>
+  <path class="arrow cyan thin" marker-end="url(#arrowCyan)" d="M 411 227 L 362 276"/>
+  <path class="arrow cyan thin" marker-end="url(#arrowCyan)" d="M 411 513 L 362 464"/>
+  <path class="arrow cyan thin" marker-end="url(#arrowCyan)" d="M 125 513 L 174 464"/>
+  <path class="arrow cyan thin" marker-end="url(#arrowCyan)" d="M 125 227 L 174 276"/>
+
+  <!-- outward tensile core arrows -->
+  <path class="arrow orange thin" marker-end="url(#arrowOrange)" d="M 268 370 L 268 288"/>
+  <path class="arrow orange thin" marker-end="url(#arrowOrange)" d="M 268 370 L 350 370"/>
+  <path class="arrow orange thin" marker-end="url(#arrowOrange)" d="M 268 370 L 268 452"/>
+  <path class="arrow orange thin" marker-end="url(#arrowOrange)" d="M 268 370 L 186 370"/>
+
+  <text class="label" x="268" y="633" text-anchor="middle">Shell squeezes inward</text>
+  <text class="small" x="268" y="657" text-anchor="middle" fill="#9ff7ff">compression closes cracks</text>
+  <text class="label" x="268" y="696" text-anchor="middle">Core pulls outward</text>
+  <text class="small" x="268" y="720" text-anchor="middle" fill="#ffc478">tension stores elastic energy</text>
+  <text class="math" x="268" y="770" text-anchor="middle">ΣF on whole drop = 0</text>
+  <text class="tiny" x="268" y="796" text-anchor="middle">Internal forces are action-reaction pairs, so they do not launch the drop.</text>
+
+  <!-- Panel 2 -->
+  <rect class="panel" x="525" y="115" width="455" height="725" rx="22"/>
+  <text class="title" x="553" y="158">2. Push on the bulb</text>
+  <text class="subtitle" x="555" y="184">External force is fought by extra compression</text>
+
+  <circle cx="725" cy="365" r="145" fill="url(#glassBulb)" stroke="#b9fbff" stroke-width="3"/>
+  <circle cx="725" cy="365" r="82" fill="url(#coreGlow)" stroke="#ffc478" stroke-width="2" opacity="0.72"/>
+  <circle cx="725" cy="365" r="145" fill="none" stroke="#7cf4ff" stroke-width="34" opacity="0.22"/>
+  <rect x="600" y="505" width="250" height="25" rx="8" fill="#14282d" stroke="#5c8991"/>
+  <text class="tiny" x="725" y="548" text-anchor="middle">support/table reaction balances the applied push</text>
+
+  <!-- applied force -->
+  <path class="arrow red" marker-end="url(#arrowRed)" d="M 725 118 L 725 220"/>
+  <text class="label" x="744" y="138">external push F</text>
+
+  <!-- compression spread -->
+  <path class="arrow cyan" marker-end="url(#arrowCyan)" d="M 725 222 C 710 260, 700 286, 686 315"/>
+  <path class="arrow cyan" marker-end="url(#arrowCyan)" d="M 725 222 C 742 260, 753 288, 765 318"/>
+  <path class="arrow cyan thin dash" d="M 613 308 C 685 260, 766 260, 838 308"/>
+  <path class="arrow cyan thin dash" d="M 595 390 C 682 425, 773 425, 855 390"/>
+  <text class="small" x="725" y="270" text-anchor="middle" fill="#9ff7ff">surface compression increases</text>
+
+  <!-- reaction -->
+  <path class="arrow white" marker-end="url(#arrowWhite)" d="M 725 610 L 725 532"/>
+  <text class="label" x="746" y="604">reaction force</text>
+
+  <text class="label" x="560" y="642">Why it survives:</text>
+  <text class="small" x="560" y="670">A tiny surface crack would need to open.</text>
+  <text class="small" x="560" y="695">But the shell is already squeezing it shut.</text>
+  <text class="math" x="560" y="746">F push + support reaction + internal stress = balanced</text>
+  <text class="tiny" x="560" y="775">The load is transferred around the bulb as compressive stress, not as crack-opening tension.</text>
+
+  <!-- Panel 3 -->
+  <rect class="panel" x="1010" y="115" width="455" height="725" rx="22"/>
+  <text class="title" x="1038" y="158">3. Break the tail</text>
+  <text class="subtitle" x="1040" y="184">The crack reaches the tensile core</text>
+
+  <!-- teardrop side silhouette -->
+  <path d="M 1138 386 C 1088 360, 1082 286, 1135 253 C 1200 212, 1268 258, 1253 327 C 1244 368, 1226 384, 1194 392 C 1260 398, 1330 414, 1428 430" fill="none" stroke="#94f8ff" stroke-width="54" stroke-linecap="round" opacity="0.28"/>
+  <path d="M 1138 386 C 1088 360, 1082 286, 1135 253 C 1200 212, 1268 258, 1253 327 C 1244 368, 1226 384, 1194 392 C 1260 398, 1330 414, 1428 430" fill="none" stroke="#c9ffff" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="1175" cy="326" r="70" fill="url(#coreGlow)" opacity="0.62"/>
+
+  <!-- crack path -->
+  <path d="M 1428 430 L 1387 420 L 1358 432 L 1327 414 L 1294 424 L 1264 405 L 1220 390 L 1174 354" fill="none" stroke="#ff5e4d" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="1428" cy="430" r="16" fill="#ff5e4d"/>
+  <text class="label" x="1265" y="470" fill="#ffb0a3">crack path</text>
+
+  <!-- outward release arrows -->
+  <path class="arrow orange" marker-end="url(#arrowOrange)" d="M 1175 326 L 1110 264"/>
+  <path class="arrow orange" marker-end="url(#arrowOrange)" d="M 1175 326 L 1260 274"/>
+  <path class="arrow orange" marker-end="url(#arrowOrange)" d="M 1175 326 L 1100 410"/>
+  <path class="arrow orange" marker-end="url(#arrowOrange)" d="M 1175 326 L 1278 402"/>
+  <text class="small" x="1175" y="540" text-anchor="middle" fill="#ffc478">tensile core unloads fast</text>
+
+  <text class="label" x="1044" y="642">Why it explodes:</text>
+  <text class="small" x="1044" y="670">The tail is thin, so a crack can cut through it.</text>
+  <text class="small" x="1044" y="695">Once the crack reaches the core, tension opens it faster.</text>
+  <text class="math" x="1044" y="746">Stored elastic energy → fracture wave</text>
+  <text class="tiny" x="1044" y="775">The old equilibrium is destroyed; the stress field rapidly relaxes by shattering.</text>
+</svg>

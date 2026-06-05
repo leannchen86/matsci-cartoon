@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="720" viewBox="0 0 1100 720">
+  <defs>
+    <marker id="redArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#ff5e4d"/>
+    </marker>
+    <marker id="orangeArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#ffb45f"/>
+    </marker>
+    <radialGradient id="glass" cx="42%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#d8ffff" stop-opacity="0.95"/>
+      <stop offset="48%" stop-color="#5be8ef" stop-opacity="0.36"/>
+      <stop offset="100%" stop-color="#0d3037" stop-opacity="0.94"/>
+    </radialGradient>
+    <radialGradient id="core" cx="50%" cy="50%" r="58%">
+      <stop offset="0%" stop-color="#ffc879" stop-opacity="0.92"/>
+      <stop offset="100%" stop-color="#451d14" stop-opacity="0.95"/>
+    </radialGradient>
+    <style>
+      .bg { fill: #05090b; }
+      .panel { fill: #081114; stroke: #28515a; stroke-width: 1.5; }
+      .title { fill: #f2fdff; font: 800 34px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .subtitle { fill: #b8d3d9; font: 650 18px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .label { fill: #e8fbff; font: 800 24px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .small { fill: #b8d3d9; font: 650 17px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .math { fill: #ffffff; font: 850 24px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .orangeText { fill: #ffc879; }
+      .redText { fill: #ff9b8d; }
+      .arrow { fill: none; stroke-width: 5; stroke-linecap: round; }
+      .red { stroke: #ff5e4d; }
+      .orange { stroke: #ffb45f; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1100" height="720"/>
+  <rect class="panel" x="32" y="32" width="1036" height="656" rx="24"/>
+
+  <text class="title" x="62" y="86">3. Break the tail: why the balance fails</text>
+  <text class="subtitle" x="64" y="120">The tail is thin. A crack can reach the pulled-inside part of the drop.</text>
+
+  <path d="M190 415 C125 385 125 285 190 245 C270 195 355 250 335 335 C322 386 292 410 245 420 C355 425 520 455 845 480" fill="none" stroke="#8ff7ff" stroke-width="70" stroke-linecap="round" opacity="0.28"/>
+  <path d="M190 415 C125 385 125 285 190 245 C270 195 355 250 335 335 C322 386 292 410 245 420 C355 425 520 455 845 480" fill="none" stroke="#d0ffff" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+  <circle cx="248" cy="330" r="75" fill="url(#core)" opacity="0.65"/>
+
+  <path d="M845 480 L790 462 L750 482 L708 456 L662 472 L620 448 L570 438 L500 425 L420 408 L330 370 L260 338" fill="none" stroke="#ff5e4d" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="845" cy="480" r="18" fill="#ff5e4d"/>
+  <text class="label redText" x="660" y="535">crack runs from tail into bulb</text>
+
+  <path class="arrow orange" marker-end="url(#orangeArrow)" d="M248 330 L175 250"/>
+  <path class="arrow orange" marker-end="url(#orangeArrow)" d="M248 330 L335 255"/>
+  <path class="arrow orange" marker-end="url(#orangeArrow)" d="M248 330 L160 425"/>
+  <path class="arrow orange" marker-end="url(#orangeArrow)" d="M248 330 L360 415"/>
+  <text class="label orangeText" x="248" y="205" text-anchor="middle">inside pulls crack open</text>
+
+  <rect x="620" y="160" width="410" height="205" rx="20" fill="#0c171a" stroke="#335b63"/>
+  <text class="label" x="650" y="205">Why thin tail is risky</text>
+  <text class="math" x="650" y="255">force per area = F / area</text>
+  <text class="math" x="650" y="305">small area -> big number</text>
+  <text class="small" x="650" y="340">Same idea as stepping on snow with a heel.</text>
+
+  <rect x="620" y="395" width="410" height="210" rx="20" fill="#0c171a" stroke="#335b63"/>
+  <text class="label" x="650" y="442">Crack rule</text>
+  <text class="math" x="650" y="492">opens if opening number > 0</text>
+  <text class="math orangeText" x="650" y="540">inside pull = +100</text>
+  <text class="math redText" x="650" y="588">+100 opens crack fast</text>
+
+  <rect x="92" y="610" width="430" height="52" rx="16" fill="#101e22" stroke="#426a72"/>
+  <text class="math" x="307" y="645" text-anchor="middle">old balance is broken</text>
+</svg>
