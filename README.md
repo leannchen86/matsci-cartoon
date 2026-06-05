@@ -5,8 +5,7 @@ Interactive visual explanations of materials-science phenomena.
 ## Projects
 
 - `tapioca/` - tapioca ball starch-water microstructure, showing temperature, moisture, and storage-history effects.
-
-Planned future folders can live alongside it, for example `prince-ruperts-teardrop/`.
+- `prince-ruperts-teardrops/` - Prince Rupert's teardrop residual-stress and fracture demo.
 
 ## Local Preview
 
@@ -18,3 +17,4 @@ Then open:
 
 - `http://127.0.0.1:8091/`
 - `http://127.0.0.1:8091/tapioca/`
+- `http://127.0.0.1:8091/prince-ruperts-teardrops/`
