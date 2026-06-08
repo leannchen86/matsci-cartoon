@@ -115,9 +115,14 @@
       <output for="headPos"></output>
     </div>
     <div class="row">
-      <label for="taper">Taper</label>
-      <input id="taper" name="taper" type="range" min="1.0" max="3.2" value="2.10" step="0.05">
-      <output for="taper"></output>
+      <label for="headSmooth">Head ease</label>
+      <input id="headSmooth" name="headSmooth" type="range" min="0.35" max="1.40" value="0.52" step="0.01">
+      <output for="headSmooth"></output>
+    </div>
+    <div class="row">
+      <label for="tailTaper">Tail taper</label>
+      <input id="tailTaper" name="tailTaper" type="range" min="1.0" max="8.0" value="3.60" step="0.1">
+      <output for="tailTaper"></output>
     </div>
     <div class="row">
       <label for="bend">Bend</label>
@@ -154,7 +159,8 @@
     const defaults = {
       headSize: 104,
       headPos: 0.17,
-      taper: 2.10,
+      headSmooth: 0.52,
+      tailTaper: 3.60,
       bend: 690,
       hook: 106,
       length: 1230,
@@ -197,7 +203,8 @@
       return {
         headSize: Number(data.get("headSize")),
         headPos: Number(data.get("headPos")),
-        taper: Number(data.get("taper")),
+        headSmooth: Number(data.get("headSmooth")),
+        tailTaper: Number(data.get("tailTaper")),
         bend: Number(data.get("bend")),
         hook: Number(data.get("hook")),
         length: Number(data.get("length")),
@@ -266,7 +273,7 @@
       const x = params.bend * Math.pow(t, 2.35) +
         params.hook * (0.95 * curl + 0.14 * tail);
       const y = -params.length / 2 +
-        params.length * (t + 0.026 * Math.sin(Math.PI * t));
+        params.length * t;
       return { x, y };
     }
 
@@ -278,11 +285,20 @@
     }
 
     function radiusAt(t, params) {
-      const headT = clamp(t / params.headPos, 0, 1);
-      const growth = Math.pow(Math.sin(headT * Math.PI * 0.5), 0.47);
-      const decay = Math.pow(Math.max(0, (1 - t) / (1 - params.headPos)), params.taper);
-      const tip = 1 - smoothstep(0.988, 1, t);
-      return params.headSize * growth * decay * tip;
+      if (t <= 0 || t >= 1) {
+        return 0;
+      }
+
+      const peak = params.headPos;
+      if (t <= peak) {
+        const u = clamp(t / peak, 0, 1);
+        const rise = Math.sin(u * Math.PI * 0.5);
+        return params.headSize * Math.pow(rise, params.headSmooth);
+      }
+
+      const u = clamp((t - peak) / (1 - peak), 0, 1);
+      const fall = Math.cos(u * Math.PI * 0.5);
+      return params.headSize * Math.pow(Math.max(0, fall), params.tailTaper);
     }
 
     function drawShape(points) {
