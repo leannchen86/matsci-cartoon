@@ -183,6 +183,10 @@
       <span>Stress</span>
       <input id="stress" name="stress" type="checkbox" checked>
     </label>
+    <label class="row checkbox" for="cut">
+      <span>Cut</span>
+      <input id="cut" name="cut" type="checkbox" checked>
+    </label>
     <div class="actions">
       <button id="reset" type="button">Reset</button>
       <button id="fit" type="button">Fit</button>
@@ -208,11 +212,13 @@
       length: 1230,
       quench: 1.15,
       shell: 0.36,
-      stress: true
+      stress: true,
+      cut: true
     };
 
     const spineSegments = 190;
     const radialSegments = 56;
+    const cutRadialSegments = 36;
     const stressRadialNodes = 34;
     const stressTimeSteps = 360;
     const glassTransition = 0.82;
@@ -250,6 +256,16 @@
     mesh.renderOrder = 1;
     scene.add(mesh);
 
+    const cutMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.DoubleSide,
+      vertexColors: true
+    });
+
+    const cutMesh = new THREE.Mesh(new THREE.BufferGeometry(), cutMaterial);
+    cutMesh.renderOrder = 2;
+    scene.add(cutMesh);
+
     scene.add(new THREE.HemisphereLight(0xffffff, 0xd9d9d9, 1.25));
 
     const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
@@ -277,7 +293,8 @@
         length: Number(data.get("length")),
         quench: Number(data.get("quench")),
         shell: Number(data.get("shell")),
-        stress: data.has("stress")
+        stress: data.has("stress"),
+        cut: data.has("cut")
       };
     }
 
@@ -307,6 +324,8 @@
       const model = buildSurface(params, frames, stressModel);
       mesh.geometry.dispose();
       mesh.geometry = model.geometry;
+      cutMesh.geometry.dispose();
+      cutMesh.geometry = model.cutGeometry;
       latestFrames = frames;
       window.__stressModel = stressModel;
 
@@ -325,6 +344,10 @@
       const colors = [];
       const uvs = [];
       const indices = [];
+      const ringCount = params.cut ? Math.floor(radialSegments / 2) + 1 : radialSegments;
+      const ringSegments = params.cut ? ringCount - 1 : radialSegments;
+      const angleStart = params.cut ? Math.PI : 0;
+      const angleSpan = params.cut ? Math.PI : Math.PI * 2;
 
       frames.forEach((frame, i) => {
         const t = frame.t;
@@ -333,8 +356,9 @@
           stressColor(stressModel.sample(t, 1)) :
           new THREE.Color(0x050505);
 
-        for (let j = 0; j < radialSegments; j += 1) {
-          const angle = (j / radialSegments) * Math.PI * 2;
+        for (let j = 0; j < ringCount; j += 1) {
+          const amount = params.cut ? j / (ringCount - 1) : j / radialSegments;
+          const angle = angleStart + amount * angleSpan;
           const offset = frame.normal.clone()
             .multiplyScalar(Math.cos(angle) * radius)
             .add(frame.binormal.clone().multiplyScalar(Math.sin(angle) * radius));
@@ -347,11 +371,12 @@
       });
 
       for (let i = 0; i < frames.length - 1; i += 1) {
-        for (let j = 0; j < radialSegments; j += 1) {
-          const a = i * radialSegments + j;
-          const b = i * radialSegments + ((j + 1) % radialSegments);
-          const c = (i + 1) * radialSegments + j;
-          const d = (i + 1) * radialSegments + ((j + 1) % radialSegments);
+        for (let j = 0; j < ringSegments; j += 1) {
+          const next = params.cut ? j + 1 : (j + 1) % ringCount;
+          const a = i * ringCount + j;
+          const b = i * ringCount + next;
+          const c = (i + 1) * ringCount + j;
+          const d = (i + 1) * ringCount + next;
 
           indices.push(a, c, b);
           indices.push(b, c, d);
@@ -365,7 +390,56 @@
       geometry.setIndex(indices);
       geometry.computeVertexNormals();
 
-      return { geometry, frames };
+      return {
+        geometry,
+        cutGeometry: params.cut ? buildCutGeometry(params, frames, stressModel) : new THREE.BufferGeometry()
+      };
+    }
+
+    function buildCutGeometry(params, frames, stressModel) {
+      const positions = [];
+      const colors = [];
+      const uvs = [];
+      const indices = [];
+
+      frames.forEach((frame) => {
+        const t = frame.t;
+        const radius = radiusAt(t, params);
+        for (let j = 0; j <= cutRadialSegments; j += 1) {
+          const across = j / cutRadialSegments;
+          const signedRadius = (across * 2 - 1) * radius;
+          const rho = Math.abs(across * 2 - 1);
+          const point = frame.center.clone().add(frame.normal.clone().multiplyScalar(signedRadius));
+          const color = params.stress ?
+            stressColor(stressModel.sample(t, rho)) :
+            new THREE.Color(0x050505);
+
+          positions.push(point.x, point.y, point.z);
+          colors.push(color.r, color.g, color.b);
+          uvs.push(across, t);
+        }
+      });
+
+      const rowCount = cutRadialSegments + 1;
+      for (let i = 0; i < frames.length - 1; i += 1) {
+        for (let j = 0; j < cutRadialSegments; j += 1) {
+          const a = i * rowCount + j;
+          const b = i * rowCount + j + 1;
+          const c = (i + 1) * rowCount + j;
+          const d = (i + 1) * rowCount + j + 1;
+
+          indices.push(a, c, b);
+          indices.push(b, c, d);
+        }
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+      geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+      return geometry;
     }
 
     function buildFrames(params) {
@@ -981,6 +1055,10 @@
       dropMaterial.color.set(params.stress ? 0xffffff : 0x050505);
       dropMaterial.roughness = params.stress ? 0.56 : 0.72;
       dropMaterial.needsUpdate = true;
+      cutMesh.visible = params.cut;
+      cutMaterial.vertexColors = params.stress;
+      cutMaterial.color.set(params.stress ? 0xffffff : 0x050505);
+      cutMaterial.needsUpdate = true;
     }
 
     function stressColor(stressMpa) {
@@ -1067,7 +1145,7 @@
     fitButton.addEventListener("click", () => rebuild({ fit: true }));
     window.addEventListener("resize", resize);
 
-    window.__drop3d = { scene, camera, renderer, mesh, orbit };
+    window.__drop3d = { scene, camera, renderer, mesh, cutMesh, orbit };
 
     resize();
     resetControls();
