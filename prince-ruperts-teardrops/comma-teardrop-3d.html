@@ -169,9 +169,18 @@
       <input id="length" name="length" type="range" min="900" max="1500" value="1230" step="5">
       <output for="length"></output>
     </div>
-    <label class="row checkbox" for="guides">
-      <span>Guides</span>
-      <input id="guides" name="guides" type="checkbox">
+    <div class="row">
+      <label for="shell">Shell</label>
+      <input id="shell" name="shell" type="range" min="0.18" max="1.0" value="0.48" step="0.01">
+      <output for="shell"></output>
+    </div>
+    <label class="row checkbox" for="heat">
+      <span>Heat</span>
+      <input id="heat" name="heat" type="checkbox" checked>
+    </label>
+    <label class="row checkbox" for="rings">
+      <span>Rings</span>
+      <input id="rings" name="rings" type="checkbox" checked>
     </label>
     <div class="actions">
       <button id="reset" type="button">Reset</button>
@@ -196,11 +205,20 @@
       hook: 106,
       depth: 145,
       length: 1230,
-      guides: false
+      shell: 0.48,
+      heat: true,
+      rings: true
     };
 
     const spineSegments = 190;
     const radialSegments = 56;
+    const ringFractions = [0.25, 0.5, 0.75, 1];
+    const heatStops = [
+      new THREE.Color(0xffd84a),
+      new THREE.Color(0xff5a36),
+      new THREE.Color(0x2fc7c0),
+      new THREE.Color(0x263f9c)
+    ];
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
 
@@ -218,16 +236,22 @@
     orbit.autoRotateSpeed = 0.12;
 
     const dropMaterial = new THREE.MeshStandardMaterial({
-      color: 0x050505,
-      roughness: 0.72,
+      color: 0xffffff,
+      roughness: 0.56,
       metalness: 0.0,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: defaults.shell,
+      depthWrite: false,
+      vertexColors: true
     });
 
     const mesh = new THREE.Mesh(new THREE.BufferGeometry(), dropMaterial);
+    mesh.renderOrder = 1;
     scene.add(mesh);
 
     const guideGroup = new THREE.Group();
+    guideGroup.renderOrder = 2;
     scene.add(guideGroup);
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0xd9d9d9, 1.25));
@@ -255,7 +279,9 @@
         hook: Number(data.get("hook")),
         depth: Number(data.get("depth")),
         length: Number(data.get("length")),
-        guides: data.has("guides")
+        shell: Number(data.get("shell")),
+        heat: data.has("heat"),
+        rings: data.has("rings")
       };
     }
 
@@ -276,6 +302,7 @@
     function rebuild(options = {}) {
       const params = readParams();
       writeOutputs(params);
+      updateMaterial(params);
 
       const model = buildSurface(params);
       mesh.geometry.dispose();
@@ -296,12 +323,14 @@
     function buildSurface(params) {
       const frames = buildFrames(params);
       const positions = [];
+      const colors = [];
       const uvs = [];
       const indices = [];
 
       frames.forEach((frame, i) => {
         const t = frame.t;
         const radius = radiusAt(t, params);
+        const color = heatColor(t);
 
         for (let j = 0; j < radialSegments; j += 1) {
           const angle = (j / radialSegments) * Math.PI * 2;
@@ -311,6 +340,7 @@
           const point = frame.center.clone().add(offset);
 
           positions.push(point.x, point.y, point.z);
+          colors.push(color.r, color.g, color.b);
           uvs.push(j / radialSegments, t);
         }
       });
@@ -329,6 +359,7 @@
 
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
       geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
       geometry.setIndex(indices);
       geometry.computeVertexNormals();
@@ -412,21 +443,27 @@
     }
 
     function rebuildGuides(params) {
-      guideGroup.clear();
-      if (!params.guides) {
+      clearGuides();
+      if (!params.rings) {
         return;
       }
 
       const spinePoints = latestFrames.map((frame) => frame.center);
       const spineGeometry = new THREE.BufferGeometry().setFromPoints(spinePoints);
+      const guideColor = params.heat ? 0x111111 : 0xffffff;
       const spineLine = new THREE.Line(
         spineGeometry,
-        new THREE.LineBasicMaterial({ color: 0xffffff })
+        new THREE.LineBasicMaterial({
+          color: guideColor,
+          transparent: true,
+          opacity: params.heat ? 0.42 : 0.62,
+          depthTest: false
+        })
       );
       guideGroup.add(spineLine);
 
       latestFrames.forEach((frame, index) => {
-        if (index % 18 !== 0 && index !== latestFrames.length - 1) {
+        if (index % 16 !== 0 && index !== latestFrames.length - 1) {
           return;
         }
 
@@ -435,21 +472,54 @@
           return;
         }
 
-        const points = [];
-        for (let j = 0; j < radialSegments; j += 1) {
-          const angle = (j / radialSegments) * Math.PI * 2;
-          const offset = frame.normal.clone()
-            .multiplyScalar(Math.cos(angle) * radius)
-            .add(frame.binormal.clone().multiplyScalar(Math.sin(angle) * radius));
-          points.push(frame.center.clone().add(offset));
-        }
+        ringFractions.forEach((fraction) => {
+          const points = [];
+          const ringRadius = radius * fraction;
+          for (let j = 0; j < radialSegments; j += 1) {
+            const angle = (j / radialSegments) * Math.PI * 2;
+            const offset = frame.normal.clone()
+              .multiplyScalar(Math.cos(angle) * ringRadius)
+              .add(frame.binormal.clone().multiplyScalar(Math.sin(angle) * ringRadius));
+            points.push(frame.center.clone().add(offset));
+          }
 
-        const ring = new THREE.LineLoop(
-          new THREE.BufferGeometry().setFromPoints(points),
-          new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.72 })
-        );
-        guideGroup.add(ring);
+          const ring = new THREE.LineLoop(
+            new THREE.BufferGeometry().setFromPoints(points),
+            new THREE.LineBasicMaterial({
+              color: guideColor,
+              transparent: true,
+              opacity: fraction === 1 ? 0.34 : 0.22,
+              depthTest: false
+            })
+          );
+          guideGroup.add(ring);
+        });
       });
+    }
+
+    function clearGuides() {
+      while (guideGroup.children.length > 0) {
+        const child = guideGroup.children.pop();
+        child.geometry.dispose();
+        child.material.dispose();
+      }
+    }
+
+    function updateMaterial(params) {
+      dropMaterial.opacity = params.shell;
+      dropMaterial.transparent = params.shell < 1;
+      dropMaterial.depthWrite = params.shell >= 0.96;
+      dropMaterial.vertexColors = params.heat;
+      dropMaterial.color.set(params.heat ? 0xffffff : 0x050505);
+      dropMaterial.roughness = params.heat ? 0.56 : 0.72;
+      dropMaterial.needsUpdate = true;
+    }
+
+    function heatColor(t) {
+      const scaled = clamp(t, 0, 1) * (heatStops.length - 1);
+      const index = Math.min(Math.floor(scaled), heatStops.length - 2);
+      const local = smoothstep(0, 1, scaled - index);
+      return new THREE.Color().lerpColors(heatStops[index], heatStops[index + 1], local);
     }
 
     function updateCameraBounds() {
