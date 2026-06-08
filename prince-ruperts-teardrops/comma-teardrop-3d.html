@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spine Radius Drop 3D</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: #fff;
+    }
+
+    .panel {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      width: min(310px, calc(100vw - 24px));
+      max-height: calc(100vh - 24px);
+      overflow: auto;
+      padding: 10px;
+      border: 1px solid #000;
+      background: rgba(255, 255, 255, 0.94);
+      color: #000;
+      font-size: 13px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 78px 1fr 48px;
+      gap: 8px;
+      align-items: center;
+      min-height: 28px;
+    }
+
+    .row.checkbox {
+      grid-template-columns: 1fr auto;
+    }
+
+    label,
+    output {
+      line-height: 1.2;
+    }
+
+    output {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #000;
+    }
+
+    input[type="checkbox"] {
+      accent-color: #000;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    button {
+      min-height: 32px;
+      border: 1px solid #000;
+      border-radius: 0;
+      background: #fff;
+      color: #000;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:active {
+      background: #000;
+      color: #fff;
+    }
+
+    @media (max-width: 640px) {
+      .panel {
+        width: min(260px, calc(100vw - 24px));
+        gap: 5px;
+        padding: 8px;
+        font-size: 12px;
+      }
+
+      .row {
+        grid-template-columns: 68px 1fr 38px;
+        gap: 6px;
+        min-height: 23px;
+      }
+
+      button {
+        min-height: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <form class="panel" id="controls">
+    <div class="row">
+      <label for="headSize">Head</label>
+      <input id="headSize" name="headSize" type="range" min="70" max="180" value="104" step="1">
+      <output for="headSize"></output>
+    </div>
+    <div class="row">
+      <label for="headPos">Position</label>
+      <input id="headPos" name="headPos" type="range" min="0.10" max="0.30" value="0.17" step="0.01">
+      <output for="headPos"></output>
+    </div>
+    <div class="row">
+      <label for="headSmooth">Head ease</label>
+      <input id="headSmooth" name="headSmooth" type="range" min="0.35" max="1.40" value="0.52" step="0.01">
+      <output for="headSmooth"></output>
+    </div>
+    <div class="row">
+      <label for="tailTaper">Tail taper</label>
+      <input id="tailTaper" name="tailTaper" type="range" min="1.0" max="8.0" value="3.60" step="0.1">
+      <output for="tailTaper"></output>
+    </div>
+    <div class="row">
+      <label for="bend">Bend</label>
+      <input id="bend" name="bend" type="range" min="320" max="860" value="690" step="1">
+      <output for="bend"></output>
+    </div>
+    <div class="row">
+      <label for="hook">Hook</label>
+      <input id="hook" name="hook" type="range" min="-160" max="160" value="106" step="1">
+      <output for="hook"></output>
+    </div>
+    <div class="row">
+      <label for="depth">Depth</label>
+      <input id="depth" name="depth" type="range" min="-260" max="260" value="145" step="1">
+      <output for="depth"></output>
+    </div>
+    <div class="row">
+      <label for="length">Length</label>
+      <input id="length" name="length" type="range" min="900" max="1500" value="1230" step="5">
+      <output for="length"></output>
+    </div>
+    <label class="row checkbox" for="guides">
+      <span>Guides</span>
+      <input id="guides" name="guides" type="checkbox">
+    </label>
+    <div class="actions">
+      <button id="reset" type="button">Reset</button>
+      <button id="fit" type="button">Fit</button>
+    </div>
+  </form>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+    const controlsForm = document.getElementById("controls");
+    const resetButton = document.getElementById("reset");
+    const fitButton = document.getElementById("fit");
+
+    const defaults = {
+      headSize: 104,
+      headPos: 0.17,
+      headSmooth: 0.52,
+      tailTaper: 3.60,
+      bend: 690,
+      hook: 106,
+      depth: 145,
+      length: 1230,
+      guides: false
+    };
+
+    const spineSegments = 190;
+    const radialSegments = 56;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+
+    const camera = new THREE.PerspectiveCamera(32, 1, 1, 6000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setClearColor(0xffffff, 1);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.insertBefore(renderer.domElement, controlsForm);
+
+    const orbit = new OrbitControls(camera, renderer.domElement);
+    orbit.enableDamping = true;
+    orbit.dampingFactor = 0.08;
+    orbit.autoRotate = true;
+    orbit.autoRotateSpeed = 0.12;
+
+    const dropMaterial = new THREE.MeshStandardMaterial({
+      color: 0x050505,
+      roughness: 0.72,
+      metalness: 0.0,
+      side: THREE.DoubleSide
+    });
+
+    const mesh = new THREE.Mesh(new THREE.BufferGeometry(), dropMaterial);
+    scene.add(mesh);
+
+    const guideGroup = new THREE.Group();
+    scene.add(guideGroup);
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xd9d9d9, 1.25));
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
+    keyLight.position.set(-260, -360, 780);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.55);
+    rimLight.position.set(540, 430, 260);
+    scene.add(rimLight);
+
+    let latestFrames = [];
+    let latestSphere = new THREE.Sphere(new THREE.Vector3(), 1);
+    let fittedOnce = false;
+
+    function readParams() {
+      const data = new FormData(controlsForm);
+      return {
+        headSize: Number(data.get("headSize")),
+        headPos: Number(data.get("headPos")),
+        headSmooth: Number(data.get("headSmooth")),
+        tailTaper: Number(data.get("tailTaper")),
+        bend: Number(data.get("bend")),
+        hook: Number(data.get("hook")),
+        depth: Number(data.get("depth")),
+        length: Number(data.get("length")),
+        guides: data.has("guides")
+      };
+    }
+
+    function writeOutputs(params) {
+      controlsForm.querySelectorAll("input[type='range']").forEach((input) => {
+        const output = controlsForm.querySelector(`output[for='${input.id}']`);
+        output.value = formatValue(params[input.name]);
+      });
+    }
+
+    function formatValue(value) {
+      if (Math.abs(value) < 10 && !Number.isInteger(value)) {
+        return value.toFixed(2);
+      }
+      return String(Math.round(value));
+    }
+
+    function rebuild(options = {}) {
+      const params = readParams();
+      writeOutputs(params);
+
+      const model = buildSurface(params);
+      mesh.geometry.dispose();
+      mesh.geometry = model.geometry;
+      latestFrames = model.frames;
+
+      mesh.geometry.computeBoundingSphere();
+      latestSphere = mesh.geometry.boundingSphere.clone();
+      rebuildGuides(params);
+      updateCameraBounds();
+
+      if (!fittedOnce || options.fit) {
+        fitCamera();
+        fittedOnce = true;
+      }
+    }
+
+    function buildSurface(params) {
+      const frames = buildFrames(params);
+      const positions = [];
+      const uvs = [];
+      const indices = [];
+
+      frames.forEach((frame, i) => {
+        const t = frame.t;
+        const radius = radiusAt(t, params);
+
+        for (let j = 0; j < radialSegments; j += 1) {
+          const angle = (j / radialSegments) * Math.PI * 2;
+          const offset = frame.normal.clone()
+            .multiplyScalar(Math.cos(angle) * radius)
+            .add(frame.binormal.clone().multiplyScalar(Math.sin(angle) * radius));
+          const point = frame.center.clone().add(offset);
+
+          positions.push(point.x, point.y, point.z);
+          uvs.push(j / radialSegments, t);
+        }
+      });
+
+      for (let i = 0; i < frames.length - 1; i += 1) {
+        for (let j = 0; j < radialSegments; j += 1) {
+          const a = i * radialSegments + j;
+          const b = i * radialSegments + ((j + 1) % radialSegments);
+          const c = (i + 1) * radialSegments + j;
+          const d = (i + 1) * radialSegments + ((j + 1) % radialSegments);
+
+          indices.push(a, c, b);
+          indices.push(b, c, d);
+        }
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+
+      return { geometry, frames };
+    }
+
+    function buildFrames(params) {
+      const frames = [];
+      const firstTangent = tangentAt(0, params);
+      let normal = initialNormal(firstTangent);
+      let binormal = new THREE.Vector3().crossVectors(firstTangent, normal).normalize();
+      let previousTangent = firstTangent;
+
+      for (let i = 0; i <= spineSegments; i += 1) {
+        const s = i / spineSegments;
+        const t = 0.5 - 0.5 * Math.cos(Math.PI * s);
+        const center = spine(t, params);
+        const tangent = tangentAt(t, params);
+
+        if (i > 0) {
+          const rotation = new THREE.Quaternion().setFromUnitVectors(previousTangent, tangent);
+          normal.applyQuaternion(rotation).normalize();
+          binormal.crossVectors(tangent, normal).normalize();
+          normal.crossVectors(binormal, tangent).normalize();
+        }
+
+        frames.push({
+          t,
+          center,
+          tangent: tangent.clone(),
+          normal: normal.clone(),
+          binormal: binormal.clone()
+        });
+
+        previousTangent = tangent;
+      }
+
+      return frames;
+    }
+
+    function spine(t, params) {
+      const tail = smoothstep(0.64, 1, t);
+      const curl = Math.sin(Math.PI * tail) * tail;
+      const x = params.bend * Math.pow(t, 2.35) +
+        params.hook * (0.95 * curl + 0.14 * tail);
+      const y = params.length / 2 - params.length * t;
+      const z = params.depth * Math.sin(Math.PI * t) * Math.pow(t, 0.7);
+      return new THREE.Vector3(x, y, z);
+    }
+
+    function tangentAt(t, params) {
+      const step = 0.001;
+      const a = spine(clamp(t - step, 0, 1), params);
+      const b = spine(clamp(t + step, 0, 1), params);
+      return b.sub(a).normalize();
+    }
+
+    function initialNormal(tangent) {
+      const zAxis = new THREE.Vector3(0, 0, 1);
+      const xAxis = new THREE.Vector3(1, 0, 0);
+      const reference = Math.abs(tangent.dot(zAxis)) > 0.92 ? xAxis : zAxis;
+      return new THREE.Vector3().crossVectors(reference, tangent).normalize();
+    }
+
+    function radiusAt(t, params) {
+      if (t <= 0 || t >= 1) {
+        return 0;
+      }
+
+      const peak = params.headPos;
+      if (t <= peak) {
+        const u = clamp(t / peak, 0, 1);
+        const rise = Math.sin(u * Math.PI * 0.5);
+        return params.headSize * Math.pow(rise, params.headSmooth);
+      }
+
+      const u = clamp((t - peak) / (1 - peak), 0, 1);
+      const fall = Math.cos(u * Math.PI * 0.5);
+      return params.headSize * Math.pow(Math.max(0, fall), params.tailTaper);
+    }
+
+    function rebuildGuides(params) {
+      guideGroup.clear();
+      if (!params.guides) {
+        return;
+      }
+
+      const spinePoints = latestFrames.map((frame) => frame.center);
+      const spineGeometry = new THREE.BufferGeometry().setFromPoints(spinePoints);
+      const spineLine = new THREE.Line(
+        spineGeometry,
+        new THREE.LineBasicMaterial({ color: 0xffffff })
+      );
+      guideGroup.add(spineLine);
+
+      latestFrames.forEach((frame, index) => {
+        if (index % 18 !== 0 && index !== latestFrames.length - 1) {
+          return;
+        }
+
+        const radius = radiusAt(frame.t, params);
+        if (radius < 0.5) {
+          return;
+        }
+
+        const points = [];
+        for (let j = 0; j < radialSegments; j += 1) {
+          const angle = (j / radialSegments) * Math.PI * 2;
+          const offset = frame.normal.clone()
+            .multiplyScalar(Math.cos(angle) * radius)
+            .add(frame.binormal.clone().multiplyScalar(Math.sin(angle) * radius));
+          points.push(frame.center.clone().add(offset));
+        }
+
+        const ring = new THREE.LineLoop(
+          new THREE.BufferGeometry().setFromPoints(points),
+          new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.72 })
+        );
+        guideGroup.add(ring);
+      });
+    }
+
+    function updateCameraBounds() {
+      const radius = latestSphere.radius;
+      camera.near = Math.max(0.1, radius / 700);
+      camera.far = radius * 12;
+      camera.updateProjectionMatrix();
+      orbit.minDistance = radius * 0.35;
+      orbit.maxDistance = radius * 6;
+      orbit.target.copy(latestSphere.center);
+    }
+
+    function fitCamera() {
+      const radius = latestSphere.radius;
+      const center = latestSphere.center;
+      const fov = THREE.MathUtils.degToRad(camera.fov * 0.5);
+      const distance = (radius / Math.sin(fov)) * 1.14;
+      camera.position.set(center.x - radius * 0.12, center.y - radius * 0.04, center.z + distance);
+      camera.lookAt(center);
+      orbit.target.copy(center);
+      orbit.update();
+    }
+
+    function resetControls() {
+      Object.entries(defaults).forEach(([key, value]) => {
+        const input = controlsForm.querySelector(`[name='${key}']`);
+        if (!input) {
+          return;
+        }
+        if (input.type === "checkbox") {
+          input.checked = value;
+        } else {
+          input.value = value;
+        }
+      });
+      rebuild({ fit: true });
+    }
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      orbit.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function smoothstep(edge0, edge1, value) {
+      const t = clamp((value - edge0) / (edge1 - edge0), 0, 1);
+      return t * t * (3 - 2 * t);
+    }
+
+    controlsForm.addEventListener("input", () => rebuild());
+    resetButton.addEventListener("click", resetControls);
+    fitButton.addEventListener("click", () => rebuild({ fit: true }));
+    window.addEventListener("resize", resize);
+
+    window.__drop3d = { scene, camera, renderer, mesh, orbit };
+
+    resize();
+    resetControls();
+    animate();
+  </script>
+</body>
+</html>
