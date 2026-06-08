@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spine Width Drop Demo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: #fff;
+    }
+
+    .panel {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      width: min(320px, calc(100vw - 24px));
+      max-height: calc(100vh - 24px);
+      overflow: auto;
+      padding: 10px;
+      border: 1px solid #000;
+      background: rgba(255, 255, 255, 0.94);
+      color: #000;
+      font-size: 13px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 84px 1fr 44px;
+      gap: 8px;
+      align-items: center;
+      min-height: 28px;
+    }
+
+    .row.checkbox {
+      grid-template-columns: 1fr auto;
+    }
+
+    label,
+    output {
+      line-height: 1.2;
+    }
+
+    output {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #000;
+    }
+
+    input[type="checkbox"] {
+      accent-color: #000;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    button {
+      min-height: 32px;
+      border: 1px solid #000;
+      border-radius: 0;
+      background: #fff;
+      color: #000;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:active {
+      background: #000;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="drop"></canvas>
+
+  <form class="panel" id="controls">
+    <div class="row">
+      <label for="headWidth">Head</label>
+      <input id="headWidth" name="headWidth" type="range" min="90" max="240" value="94" step="1">
+      <output for="headWidth"></output>
+    </div>
+    <div class="row">
+      <label for="headPos">Position</label>
+      <input id="headPos" name="headPos" type="range" min="0.09" max="0.31" value="0.17" step="0.01">
+      <output for="headPos"></output>
+    </div>
+    <div class="row">
+      <label for="taper">Taper</label>
+      <input id="taper" name="taper" type="range" min="0.9" max="2.7" value="2.50" step="0.05">
+      <output for="taper"></output>
+    </div>
+    <div class="row">
+      <label for="bend">Bend</label>
+      <input id="bend" name="bend" type="range" min="260" max="680" value="680" step="1">
+      <output for="bend"></output>
+    </div>
+    <div class="row">
+      <label for="hook">Hook</label>
+      <input id="hook" name="hook" type="range" min="-120" max="180" value="-6" step="1">
+      <output for="hook"></output>
+    </div>
+    <div class="row">
+      <label for="asym">Asym</label>
+      <input id="asym" name="asym" type="range" min="-0.25" max="0.55" value="0.11" step="0.01">
+      <output for="asym"></output>
+    </div>
+    <div class="row">
+      <label for="length">Length</label>
+      <input id="length" name="length" type="range" min="900" max="1420" value="1210" step="5">
+      <output for="length"></output>
+    </div>
+    <label class="row checkbox" for="guides">
+      <span>Guides</span>
+      <input id="guides" name="guides" type="checkbox">
+    </label>
+    <div class="actions">
+      <button id="reset" type="button">Reset</button>
+      <button id="exportSvg" type="button">SVG</button>
+    </div>
+  </form>
+
+  <script>
+    const canvas = document.getElementById("drop");
+    const ctx = canvas.getContext("2d");
+    const controls = document.getElementById("controls");
+    const resetButton = document.getElementById("reset");
+    const exportButton = document.getElementById("exportSvg");
+
+    const defaults = {
+      headWidth: 94,
+      headPos: 0.17,
+      taper: 2.50,
+      bend: 680,
+      hook: -6,
+      asym: 0.11,
+      length: 1210,
+      guides: false
+    };
+
+    const sampleCount = 220;
+    let view = { x: 0, y: 0, scale: 1 };
+    let currentShape = null;
+
+    function resize() {
+      const deviceScale = window.devicePixelRatio || 1;
+      canvas.width = Math.round(window.innerWidth * deviceScale);
+      canvas.height = Math.round(window.innerHeight * deviceScale);
+      ctx.setTransform(deviceScale, 0, 0, deviceScale, 0, 0);
+      draw();
+    }
+
+    function draw() {
+      const params = readParams();
+      writeOutputs(params);
+      currentShape = buildShape(params, sampleCount);
+      view = fitView(currentShape.outline);
+
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      ctx.save();
+      ctx.translate(view.x, view.y);
+      ctx.scale(view.scale, view.scale);
+
+      drawShape(currentShape.outline);
+      if (params.guides) {
+        drawGuides(currentShape);
+      }
+
+      ctx.restore();
+    }
+
+    function readParams() {
+      const data = new FormData(controls);
+      return {
+        headWidth: Number(data.get("headWidth")),
+        headPos: Number(data.get("headPos")),
+        taper: Number(data.get("taper")),
+        bend: Number(data.get("bend")),
+        hook: Number(data.get("hook")),
+        asym: Number(data.get("asym")),
+        length: Number(data.get("length")),
+        guides: data.has("guides")
+      };
+    }
+
+    function writeOutputs(params) {
+      controls.querySelectorAll("input[type='range']").forEach((input) => {
+        const output = controls.querySelector(`output[for='${input.id}']`);
+        output.value = formatValue(params[input.name]);
+      });
+    }
+
+    function formatValue(value) {
+      if (Math.abs(value) < 10 && !Number.isInteger(value)) {
+        return value.toFixed(2);
+      }
+      return String(Math.round(value));
+    }
+
+    function buildShape(params, samples) {
+      const left = [];
+      const right = [];
+      const spinePoints = [];
+      const sections = [];
+
+      for (let i = 0; i <= samples; i += 1) {
+        const t = i / samples;
+        const center = spine(t, params);
+        const tangent = derivative(t, params);
+        const normal = unit({ x: -tangent.y, y: tangent.x });
+        const radius = widthAt(t, params);
+        const asym = params.asym * (1 - 0.38 * t);
+        const leftRadius = radius * Math.max(0.16, 1 + asym);
+        const rightRadius = radius * Math.max(0.16, 1 - 0.5 * asym);
+
+        left.push({
+          x: center.x + normal.x * leftRadius,
+          y: center.y + normal.y * leftRadius
+        });
+        right.push({
+          x: center.x - normal.x * rightRadius,
+          y: center.y - normal.y * rightRadius
+        });
+        spinePoints.push(center);
+
+        if (i % 8 === 0 || i === samples) {
+          sections.push({
+            left: left[left.length - 1],
+            right: right[right.length - 1]
+          });
+        }
+      }
+
+      return {
+        left,
+        right,
+        spine: spinePoints,
+        sections,
+        outline: left.concat(right.slice(1, -1).reverse())
+      };
+    }
+
+    function spine(t, params) {
+      const hookT = smoothstep(0.72, 1, t);
+      const hookTurn = hookT - 1.42 * hookT * hookT;
+      const x = params.bend * Math.pow(t, 2.55) + params.hook * hookTurn;
+      const y = -params.length / 2 + params.length * (t + 0.035 * Math.sin(Math.PI * t));
+      return { x, y };
+    }
+
+    function derivative(t, params) {
+      const step = 0.001;
+      const a = spine(clamp(t - step, 0, 1), params);
+      const b = spine(clamp(t + step, 0, 1), params);
+      return { x: b.x - a.x, y: b.y - a.y };
+    }
+
+    function widthAt(t, params) {
+      const h = params.headPos;
+      const headT = clamp(t / h, 0, 1);
+      const growth = Math.pow(Math.sin(headT * Math.PI * 0.5), 0.52);
+      const decay = Math.pow(Math.max(0, (1 - t) / (1 - h)), params.taper);
+      const tip = 1 - smoothstep(0.965, 1, t);
+      return params.headWidth * growth * decay * tip;
+    }
+
+    function drawShape(points) {
+      ctx.beginPath();
+      addClosedSpline(points);
+      ctx.fillStyle = "#000";
+      ctx.fill();
+    }
+
+    function drawGuides(shape) {
+      ctx.save();
+
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.58)";
+      ctx.lineWidth = 1.5 / view.scale;
+      shape.sections.forEach((section) => {
+        ctx.beginPath();
+        ctx.moveTo(section.left.x, section.left.y);
+        ctx.lineTo(section.right.x, section.right.y);
+        ctx.stroke();
+      });
+
+      ctx.beginPath();
+      shape.spine.forEach((point, index) => {
+        if (index === 0) {
+          ctx.moveTo(point.x, point.y);
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      });
+      ctx.strokeStyle = "#1d73e8";
+      ctx.lineWidth = 3 / view.scale;
+      ctx.lineCap = "round";
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function fitView(points) {
+      const bounds = points.reduce((box, point) => ({
+        minX: Math.min(box.minX, point.x),
+        minY: Math.min(box.minY, point.y),
+        maxX: Math.max(box.maxX, point.x),
+        maxY: Math.max(box.maxY, point.y)
+      }), {
+        minX: Infinity,
+        minY: Infinity,
+        maxX: -Infinity,
+        maxY: -Infinity
+      });
+
+      const pad = 44;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const modelWidth = bounds.maxX - bounds.minX;
+      const modelHeight = bounds.maxY - bounds.minY;
+      const scale = Math.min((w - pad * 2) / modelWidth, (h - pad * 2) / modelHeight);
+
+      return {
+        scale,
+        x: (w - modelWidth * scale) / 2 - bounds.minX * scale,
+        y: (h - modelHeight * scale) / 2 - bounds.minY * scale
+      };
+    }
+
+    function exportSvg() {
+      const params = readParams();
+      const shape = buildShape(params, sampleCount);
+      const bounds = boundsOf(shape.outline);
+      const pad = 20;
+      const minX = bounds.minX - pad;
+      const minY = bounds.minY - pad;
+      const width = bounds.maxX - bounds.minX + pad * 2;
+      const height = bounds.maxY - bounds.minY + pad * 2;
+      const path = pointsToSplinePath(shape.outline);
+      const guidePath = pointsToOpenPath(shape.spine);
+      const sectionPaths = shape.sections.map((section) => {
+        return `M ${round(section.left.x)} ${round(section.left.y)} L ${round(section.right.x)} ${round(section.right.y)}`;
+      }).join(" ");
+      const guideMarkup = params.guides
+        ? `\n  <path d="${sectionPaths}" fill="none" stroke="rgba(255,255,255,0.58)" stroke-width="1.5"/>\n  <path d="${guidePath}" fill="none" stroke="#1d73e8" stroke-width="3" stroke-linecap="round"/>`
+        : "";
+      const svg = [
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${round(minX)} ${round(minY)} ${round(width)} ${round(height)}">`,
+        `  <rect x="${round(minX)}" y="${round(minY)}" width="${round(width)}" height="${round(height)}" fill="white"/>`,
+        `  <path d="${path}" fill="black"/>${guideMarkup}`,
+        "</svg>"
+      ].join("\n");
+
+      const blob = new Blob([svg], { type: "image/svg+xml" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "spine-width-drop.svg";
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    }
+
+    function addClosedSpline(points) {
+      const n = points.length;
+      ctx.moveTo(points[0].x, points[0].y);
+
+      for (let i = 0; i < n; i += 1) {
+        const p0 = points[(i - 1 + n) % n];
+        const p1 = points[i];
+        const p2 = points[(i + 1) % n];
+        const p3 = points[(i + 2) % n];
+        const c1 = {
+          x: p1.x + (p2.x - p0.x) / 6,
+          y: p1.y + (p2.y - p0.y) / 6
+        };
+        const c2 = {
+          x: p2.x - (p3.x - p1.x) / 6,
+          y: p2.y - (p3.y - p1.y) / 6
+        };
+        ctx.bezierCurveTo(c1.x, c1.y, c2.x, c2.y, p2.x, p2.y);
+      }
+
+      ctx.closePath();
+    }
+
+    function pointsToSplinePath(points) {
+      const n = points.length;
+      const commands = [`M ${round(points[0].x)} ${round(points[0].y)}`];
+
+      for (let i = 0; i < n; i += 1) {
+        const p0 = points[(i - 1 + n) % n];
+        const p1 = points[i];
+        const p2 = points[(i + 1) % n];
+        const p3 = points[(i + 2) % n];
+        const c1 = {
+          x: p1.x + (p2.x - p0.x) / 6,
+          y: p1.y + (p2.y - p0.y) / 6
+        };
+        const c2 = {
+          x: p2.x - (p3.x - p1.x) / 6,
+          y: p2.y - (p3.y - p1.y) / 6
+        };
+        commands.push([
+          "C",
+          round(c1.x),
+          round(c1.y),
+          round(c2.x),
+          round(c2.y),
+          round(p2.x),
+          round(p2.y)
+        ].join(" "));
+      }
+      commands.push("Z");
+      return commands.join(" ");
+    }
+
+    function pointsToOpenPath(points) {
+      const commands = [`M ${round(points[0].x)} ${round(points[0].y)}`];
+      for (let i = 1; i < points.length; i += 1) {
+        commands.push(`L ${round(points[i].x)} ${round(points[i].y)}`);
+      }
+      return commands.join(" ");
+    }
+
+    function boundsOf(points) {
+      return points.reduce((box, point) => ({
+        minX: Math.min(box.minX, point.x),
+        minY: Math.min(box.minY, point.y),
+        maxX: Math.max(box.maxX, point.x),
+        maxY: Math.max(box.maxY, point.y)
+      }), {
+        minX: Infinity,
+        minY: Infinity,
+        maxX: -Infinity,
+        maxY: -Infinity
+      });
+    }
+
+    function smoothstep(edge0, edge1, value) {
+      const x = clamp((value - edge0) / (edge1 - edge0), 0, 1);
+      return x * x * (3 - 2 * x);
+    }
+
+    function unit(vector) {
+      const length = Math.hypot(vector.x, vector.y) || 1;
+      return { x: vector.x / length, y: vector.y / length };
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function round(value) {
+      return Math.round(value * 100) / 100;
+    }
+
+    function resetControls() {
+      Object.entries(defaults).forEach(([key, value]) => {
+        const input = controls.querySelector(`[name="${key}"]`);
+        if (!input) {
+          return;
+        }
+        if (input.type === "checkbox") {
+          input.checked = Boolean(value);
+        } else {
+          input.value = String(value);
+        }
+      });
+      draw();
+    }
+
+    controls.addEventListener("input", draw);
+    resetButton.addEventListener("click", resetControls);
+    exportButton.addEventListener("click", exportSvg);
+    window.addEventListener("resize", resize);
+
+    resize();
+  </script>
+</body>
+</html>
