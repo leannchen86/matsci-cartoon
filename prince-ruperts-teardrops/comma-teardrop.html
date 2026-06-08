@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Spine Width Drop Demo</title>
+  <title>Spine Radius Drop Demo</title>
   <style>
     :root {
       color-scheme: light;
@@ -37,7 +37,7 @@
       display: grid;
       grid-template-columns: 1fr;
       gap: 8px;
-      width: min(320px, calc(100vw - 24px));
+      width: min(300px, calc(100vw - 24px));
       max-height: calc(100vh - 24px);
       overflow: auto;
       padding: 10px;
@@ -49,7 +49,7 @@
 
     .row {
       display: grid;
-      grid-template-columns: 84px 1fr 44px;
+      grid-template-columns: 78px 1fr 44px;
       gap: 8px;
       align-items: center;
       min-height: 28px;
@@ -105,38 +105,33 @@
 
   <form class="panel" id="controls">
     <div class="row">
-      <label for="headWidth">Head</label>
-      <input id="headWidth" name="headWidth" type="range" min="90" max="240" value="94" step="1">
-      <output for="headWidth"></output>
+      <label for="headSize">Head</label>
+      <input id="headSize" name="headSize" type="range" min="70" max="180" value="104" step="1">
+      <output for="headSize"></output>
     </div>
     <div class="row">
       <label for="headPos">Position</label>
-      <input id="headPos" name="headPos" type="range" min="0.09" max="0.31" value="0.17" step="0.01">
+      <input id="headPos" name="headPos" type="range" min="0.10" max="0.30" value="0.17" step="0.01">
       <output for="headPos"></output>
     </div>
     <div class="row">
       <label for="taper">Taper</label>
-      <input id="taper" name="taper" type="range" min="0.9" max="2.7" value="2.50" step="0.05">
+      <input id="taper" name="taper" type="range" min="1.0" max="3.2" value="2.10" step="0.05">
       <output for="taper"></output>
     </div>
     <div class="row">
       <label for="bend">Bend</label>
-      <input id="bend" name="bend" type="range" min="260" max="680" value="680" step="1">
+      <input id="bend" name="bend" type="range" min="320" max="860" value="690" step="1">
       <output for="bend"></output>
     </div>
     <div class="row">
       <label for="hook">Hook</label>
-      <input id="hook" name="hook" type="range" min="-120" max="180" value="-6" step="1">
+      <input id="hook" name="hook" type="range" min="-160" max="160" value="106" step="1">
       <output for="hook"></output>
     </div>
     <div class="row">
-      <label for="asym">Asym</label>
-      <input id="asym" name="asym" type="range" min="-0.25" max="0.55" value="0.11" step="0.01">
-      <output for="asym"></output>
-    </div>
-    <div class="row">
       <label for="length">Length</label>
-      <input id="length" name="length" type="range" min="900" max="1420" value="1210" step="5">
+      <input id="length" name="length" type="range" min="900" max="1500" value="1230" step="5">
       <output for="length"></output>
     </div>
     <label class="row checkbox" for="guides">
@@ -157,17 +152,16 @@
     const exportButton = document.getElementById("exportSvg");
 
     const defaults = {
-      headWidth: 94,
+      headSize: 104,
       headPos: 0.17,
-      taper: 2.50,
-      bend: 680,
-      hook: -6,
-      asym: 0.11,
-      length: 1210,
+      taper: 2.10,
+      bend: 690,
+      hook: 106,
+      length: 1230,
       guides: false
     };
 
-    const sampleCount = 220;
+    const sampleCount = 520;
     let view = { x: 0, y: 0, scale: 1 };
     let currentShape = null;
 
@@ -182,7 +176,7 @@
     function draw() {
       const params = readParams();
       writeOutputs(params);
-      currentShape = buildShape(params, sampleCount);
+      currentShape = buildShape(params);
       view = fitView(currentShape.outline);
 
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
@@ -201,12 +195,11 @@
     function readParams() {
       const data = new FormData(controls);
       return {
-        headWidth: Number(data.get("headWidth")),
+        headSize: Number(data.get("headSize")),
         headPos: Number(data.get("headPos")),
         taper: Number(data.get("taper")),
         bend: Number(data.get("bend")),
         hook: Number(data.get("hook")),
-        asym: Number(data.get("asym")),
         length: Number(data.get("length")),
         guides: data.has("guides")
       };
@@ -226,33 +219,31 @@
       return String(Math.round(value));
     }
 
-    function buildShape(params, samples) {
+    function buildShape(params) {
       const left = [];
       const right = [];
       const spinePoints = [];
       const sections = [];
 
-      for (let i = 0; i <= samples; i += 1) {
-        const t = i / samples;
+      for (let i = 0; i <= sampleCount; i += 1) {
+        const s = i / sampleCount;
+        const t = 0.5 - 0.5 * Math.cos(Math.PI * s);
         const center = spine(t, params);
         const tangent = derivative(t, params);
         const normal = unit({ x: -tangent.y, y: tangent.x });
-        const radius = widthAt(t, params);
-        const asym = params.asym * (1 - 0.38 * t);
-        const leftRadius = radius * Math.max(0.16, 1 + asym);
-        const rightRadius = radius * Math.max(0.16, 1 - 0.5 * asym);
+        const radius = radiusAt(t, params);
 
         left.push({
-          x: center.x + normal.x * leftRadius,
-          y: center.y + normal.y * leftRadius
+          x: center.x + normal.x * radius,
+          y: center.y + normal.y * radius
         });
         right.push({
-          x: center.x - normal.x * rightRadius,
-          y: center.y - normal.y * rightRadius
+          x: center.x - normal.x * radius,
+          y: center.y - normal.y * radius
         });
         spinePoints.push(center);
 
-        if (i % 8 === 0 || i === samples) {
+        if (i % 44 === 0 || i === sampleCount) {
           sections.push({
             left: left[left.length - 1],
             right: right[right.length - 1]
@@ -265,15 +256,17 @@
         right,
         spine: spinePoints,
         sections,
-        outline: left.concat(right.slice(1, -1).reverse())
+        outline: right.concat(left.slice(1, -1).reverse())
       };
     }
 
     function spine(t, params) {
-      const hookT = smoothstep(0.72, 1, t);
-      const hookTurn = hookT - 1.42 * hookT * hookT;
-      const x = params.bend * Math.pow(t, 2.55) + params.hook * hookTurn;
-      const y = -params.length / 2 + params.length * (t + 0.035 * Math.sin(Math.PI * t));
+      const tail = smoothstep(0.64, 1, t);
+      const curl = Math.sin(Math.PI * tail) * tail;
+      const x = params.bend * Math.pow(t, 2.35) +
+        params.hook * (0.95 * curl + 0.14 * tail);
+      const y = -params.length / 2 +
+        params.length * (t + 0.026 * Math.sin(Math.PI * t));
       return { x, y };
     }
 
@@ -284,18 +277,24 @@
       return { x: b.x - a.x, y: b.y - a.y };
     }
 
-    function widthAt(t, params) {
-      const h = params.headPos;
-      const headT = clamp(t / h, 0, 1);
-      const growth = Math.pow(Math.sin(headT * Math.PI * 0.5), 0.52);
-      const decay = Math.pow(Math.max(0, (1 - t) / (1 - h)), params.taper);
-      const tip = 1 - smoothstep(0.965, 1, t);
-      return params.headWidth * growth * decay * tip;
+    function radiusAt(t, params) {
+      const headT = clamp(t / params.headPos, 0, 1);
+      const growth = Math.pow(Math.sin(headT * Math.PI * 0.5), 0.47);
+      const decay = Math.pow(Math.max(0, (1 - t) / (1 - params.headPos)), params.taper);
+      const tip = 1 - smoothstep(0.988, 1, t);
+      return params.headSize * growth * decay * tip;
     }
 
     function drawShape(points) {
       ctx.beginPath();
-      addClosedSpline(points);
+      points.forEach((point, index) => {
+        if (index === 0) {
+          ctx.moveTo(point.x, point.y);
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      });
+      ctx.closePath();
       ctx.fillStyle = "#000";
       ctx.fill();
     }
@@ -329,18 +328,7 @@
     }
 
     function fitView(points) {
-      const bounds = points.reduce((box, point) => ({
-        minX: Math.min(box.minX, point.x),
-        minY: Math.min(box.minY, point.y),
-        maxX: Math.max(box.maxX, point.x),
-        maxY: Math.max(box.maxY, point.y)
-      }), {
-        minX: Infinity,
-        minY: Infinity,
-        maxX: -Infinity,
-        maxY: -Infinity
-      });
-
+      const bounds = boundsOf(points);
       const pad = 44;
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -357,25 +345,20 @@
 
     function exportSvg() {
       const params = readParams();
-      const shape = buildShape(params, sampleCount);
+      const shape = buildShape(params);
       const bounds = boundsOf(shape.outline);
       const pad = 20;
       const minX = bounds.minX - pad;
       const minY = bounds.minY - pad;
       const width = bounds.maxX - bounds.minX + pad * 2;
       const height = bounds.maxY - bounds.minY + pad * 2;
-      const path = pointsToSplinePath(shape.outline);
-      const guidePath = pointsToOpenPath(shape.spine);
-      const sectionPaths = shape.sections.map((section) => {
-        return `M ${round(section.left.x)} ${round(section.left.y)} L ${round(section.right.x)} ${round(section.right.y)}`;
-      }).join(" ");
       const guideMarkup = params.guides
-        ? `\n  <path d="${sectionPaths}" fill="none" stroke="rgba(255,255,255,0.58)" stroke-width="1.5"/>\n  <path d="${guidePath}" fill="none" stroke="#1d73e8" stroke-width="3" stroke-linecap="round"/>`
+        ? `\n  <path d="${sectionsToPath(shape.sections)}" fill="none" stroke="rgba(255,255,255,0.58)" stroke-width="1.5"/>\n  <path d="${pointsToOpenPath(shape.spine)}" fill="none" stroke="#1d73e8" stroke-width="3" stroke-linecap="round"/>`
         : "";
       const svg = [
         `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${round(minX)} ${round(minY)} ${round(width)} ${round(height)}">`,
         `  <rect x="${round(minX)}" y="${round(minY)}" width="${round(width)}" height="${round(height)}" fill="white"/>`,
-        `  <path d="${path}" fill="black"/>${guideMarkup}`,
+        `  <path d="${pointsToClosedPath(shape.outline)}" fill="black"/>${guideMarkup}`,
         "</svg>"
       ].join("\n");
 
@@ -383,60 +366,15 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "spine-width-drop.svg";
+      link.download = "spine-radius-drop.svg";
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
     }
 
-    function addClosedSpline(points) {
-      const n = points.length;
-      ctx.moveTo(points[0].x, points[0].y);
-
-      for (let i = 0; i < n; i += 1) {
-        const p0 = points[(i - 1 + n) % n];
-        const p1 = points[i];
-        const p2 = points[(i + 1) % n];
-        const p3 = points[(i + 2) % n];
-        const c1 = {
-          x: p1.x + (p2.x - p0.x) / 6,
-          y: p1.y + (p2.y - p0.y) / 6
-        };
-        const c2 = {
-          x: p2.x - (p3.x - p1.x) / 6,
-          y: p2.y - (p3.y - p1.y) / 6
-        };
-        ctx.bezierCurveTo(c1.x, c1.y, c2.x, c2.y, p2.x, p2.y);
-      }
-
-      ctx.closePath();
-    }
-
-    function pointsToSplinePath(points) {
-      const n = points.length;
+    function pointsToClosedPath(points) {
       const commands = [`M ${round(points[0].x)} ${round(points[0].y)}`];
-
-      for (let i = 0; i < n; i += 1) {
-        const p0 = points[(i - 1 + n) % n];
-        const p1 = points[i];
-        const p2 = points[(i + 1) % n];
-        const p3 = points[(i + 2) % n];
-        const c1 = {
-          x: p1.x + (p2.x - p0.x) / 6,
-          y: p1.y + (p2.y - p0.y) / 6
-        };
-        const c2 = {
-          x: p2.x - (p3.x - p1.x) / 6,
-          y: p2.y - (p3.y - p1.y) / 6
-        };
-        commands.push([
-          "C",
-          round(c1.x),
-          round(c1.y),
-          round(c2.x),
-          round(c2.y),
-          round(p2.x),
-          round(p2.y)
-        ].join(" "));
+      for (let i = 1; i < points.length; i += 1) {
+        commands.push(`L ${round(points[i].x)} ${round(points[i].y)}`);
       }
       commands.push("Z");
       return commands.join(" ");
@@ -448,6 +386,12 @@
         commands.push(`L ${round(points[i].x)} ${round(points[i].y)}`);
       }
       return commands.join(" ");
+    }
+
+    function sectionsToPath(sections) {
+      return sections.map((section) => {
+        return `M ${round(section.left.x)} ${round(section.left.y)} L ${round(section.right.x)} ${round(section.right.y)}`;
+      }).join(" ");
     }
 
     function boundsOf(points) {

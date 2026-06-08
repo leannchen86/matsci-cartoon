@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prince Rupert's Drop — Bézier</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: radial-gradient(1200px 800px at 50% 30%, #16203a 0%, #0a0e1a 60%, #05070d 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  canvas {
+    display: block;
+    filter: drop-shadow(0 30px 60px rgba(0,0,0,0.55));
+  }
+  .caption {
+    position: fixed;
+    bottom: 26px;
+    width: 100%;
+    text-align: center;
+    color: #6f7da3;
+    letter-spacing: 0.18em;
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<canvas id="c" width="720" height="900"></canvas>
+<div class="caption">Prince Rupert's Drop · Bézier curves on canvas</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// Geometry of the drop (centered horizontally)
+const cx = W / 2;
+const headY = 250;        // vertical center of the bulb
+const headR = 150;        // bulb radius
+const tipY  = H - 70;     // where the tail ends
+
+// Build the teardrop outline from two mirrored cubic Béziers.
+// Left side goes from the tip (bottom) up around the bulb to the top,
+// then the right side comes back down to the tip.
+function tracePath() {
+  ctx.beginPath();
+
+  // Start at the tail tip
+  ctx.moveTo(cx, tipY);
+
+  // LEFT tail -> left shoulder of the bulb (cubic)
+  ctx.bezierCurveTo(
+    cx - 10,            tipY - 280,        // tail stays thin, hugs the centerline
+    cx - headR * 0.95,  headY + headR * 0.9,
+    cx - headR,         headY              // left equator of bulb
+  );
+
+  // LEFT bulb top: equator -> crown
+  ctx.bezierCurveTo(
+    cx - headR,         headY - headR * 0.75,
+    cx - headR * 0.6,   headY - headR,
+    cx,                 headY - headR      // top crown
+  );
+
+  // RIGHT bulb top: crown -> right equator
+  ctx.bezierCurveTo(
+    cx + headR * 0.6,   headY - headR,
+    cx + headR,         headY - headR * 0.75,
+    cx + headR,         headY
+  );
+
+  // RIGHT shoulder -> tail tip (mirror of the left)
+  ctx.bezierCurveTo(
+    cx + headR * 0.95,  headY + headR * 0.9,
+    cx + 10,            tipY - 280,
+    cx,                 tipY
+  );
+
+  ctx.closePath();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // --- Body fill: cool glass gradient ---
+  tracePath();
+  const body = ctx.createLinearGradient(cx - headR, headY - headR, cx + headR, tipY);
+  body.addColorStop(0.00, '#bfe9ff');
+  body.addColorStop(0.18, '#7fc4f0');
+  body.addColorStop(0.45, '#3f7fc8');
+  body.addColorStop(0.75, '#27508f');
+  body.addColorStop(1.00, '#16305f');
+  ctx.fillStyle = body;
+  ctx.fill();
+
+  // Radial depth shading inside the bulb
+  ctx.save();
+  tracePath();
+  ctx.clip();
+  const depth = ctx.createRadialGradient(
+    cx - 45, headY - 55, 20,
+    cx,      headY,      headR * 1.6
+  );
+  depth.addColorStop(0, 'rgba(255,255,255,0.55)');
+  depth.addColorStop(0.35, 'rgba(180,225,255,0.15)');
+  depth.addColorStop(1, 'rgba(8,20,45,0.65)');
+  ctx.fillStyle = depth;
+  ctx.fillRect(0, 0, W, H);
+
+  // Inner glow running down the tail (catches light along its length)
+  const tailGlow = ctx.createLinearGradient(cx, headY, cx, tipY);
+  tailGlow.addColorStop(0, 'rgba(190,235,255,0.0)');
+  tailGlow.addColorStop(0.5, 'rgba(190,235,255,0.25)');
+  tailGlow.addColorStop(1, 'rgba(220,245,255,0.7)');
+  ctx.strokeStyle = tailGlow;
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(cx, headY + headR * 0.4);
+  ctx.bezierCurveTo(cx, headY + 400, cx, tipY - 200, cx, tipY - 12);
+  ctx.stroke();
+  ctx.restore();
+
+  // --- Primary specular highlight (curved sliver, upper-left of bulb) ---
+  ctx.beginPath();
+  ctx.moveTo(cx - headR * 0.62, headY - headR * 0.15);
+  ctx.bezierCurveTo(
+    cx - headR * 0.85, headY - headR * 0.6,
+    cx - headR * 0.35, headY - headR * 0.95,
+    cx + headR * 0.02, headY - headR * 0.9
+  );
+  ctx.bezierCurveTo(
+    cx - headR * 0.30, headY - headR * 0.72,
+    cx - headR * 0.55, headY - headR * 0.40,
+    cx - headR * 0.50, headY - headR * 0.05
+  );
+  ctx.closePath();
+  const hl = ctx.createLinearGradient(cx - headR, headY - headR, cx, headY);
+  hl.addColorStop(0, 'rgba(255,255,255,0.95)');
+  hl.addColorStop(1, 'rgba(255,255,255,0.0)');
+  ctx.fillStyle = hl;
+  ctx.fill();
+
+  // --- Small round hotspot ---
+  ctx.beginPath();
+  ctx.ellipse(cx - 38, headY - 60, 26, 16, -0.5, 0, Math.PI * 2);
+  const spot = ctx.createRadialGradient(cx - 38, headY - 60, 0, cx - 38, headY - 60, 28);
+  spot.addColorStop(0, 'rgba(255,255,255,0.95)');
+  spot.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = spot;
+  ctx.fill();
+
+  // --- Rim light on the right edge ---
+  ctx.save();
+  tracePath();
+  ctx.clip();
+  ctx.beginPath();
+  ctx.moveTo(cx + headR, headY);
+  ctx.bezierCurveTo(
+    cx + headR, headY - headR * 0.7,
+    cx + headR * 0.6, headY - headR,
+    cx, headY - headR
+  );
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = 'rgba(210,240,255,0.5)';
+  ctx.stroke();
+  ctx.restore();
+
+  // --- Crisp outline to seal the silhouette ---
+  tracePath();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(200,230,255,0.35)';
+  ctx.stroke();
+
+  // --- Soft contact shadow / reflection puddle under the bulb glow ---
+  const puddle = ctx.createRadialGradient(cx, tipY + 18, 0, cx, tipY + 18, 120);
+  puddle.addColorStop(0, 'rgba(120,190,255,0.22)');
+  puddle.addColorStop(1, 'rgba(120,190,255,0)');
+  ctx.fillStyle = puddle;
+  ctx.beginPath();
+  ctx.ellipse(cx, tipY + 18, 120, 26, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prince Rupert's Drop — playground</title>
+<style>
+  html, body {
+    margin: 0; height: 100%;
+    background: #ffffff;
+    overflow: hidden;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    color: #111;
+  }
+  #wrap { display: flex; height: 100%; }
+  #stage { flex: 1; display: flex; align-items: center; justify-content: center; }
+  canvas { display: block; }
+  #panel {
+    width: 250px; padding: 18px 16px; box-sizing: border-box;
+    border-right: 1px solid #eee; background: #fafafa;
+    display: flex; flex-direction: column; gap: 14px;
+    font-size: 11px; overflow-y: auto;
+  }
+  #panel h1 { font-size: 12px; margin: 0 0 4px; letter-spacing: .04em; }
+  .ctrl label { display: flex; justify-content: space-between; margin-bottom: 4px; color: #444; }
+  .ctrl label b { font-weight: 600; color: #111; }
+  input[type=range] { width: 100%; accent-color: #111; }
+  .row { display: flex; align-items: center; gap: 6px; color: #444; }
+  button { font: inherit; padding: 5px 8px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+  button:hover { background: #f0f0f0; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="panel">
+    <h1>PRINCE RUPERT'S DROP</h1>
+    <div class="ctrl"><label>Head size <b id="v_head">1.00</b></label><input id="head" type="range" min="0.7" max="1.3" step="0.01" value="1"></div>
+    <div class="ctrl"><label>Head shape <b id="v_dome">1.20</b></label><input id="dome" type="range" min="0.8" max="1.7" step="0.01" value="1.2"></div>
+    <div class="ctrl"><label>Neck pinch <b id="v_neck">1.00</b></label><input id="neck" type="range" min="0.4" max="1.4" step="0.01" value="1"></div>
+    <div class="ctrl"><label>Tail thickness <b id="v_tail">1.00</b></label><input id="tail" type="range" min="0.4" max="1.6" step="0.01" value="1"></div>
+    <div class="ctrl"><label>Tail length <b id="v_len">1.00</b></label><input id="len" type="range" min="0.6" max="1.6" step="0.01" value="1"></div>
+    <div class="ctrl"><label>Tail drift <b id="v_drift">0</b></label><input id="drift" type="range" min="-120" max="180" step="1" value="0"></div>
+    <div class="ctrl"><label>Tip hook <b id="v_hook">0</b></label><input id="hook" type="range" min="-160" max="160" step="1" value="0"></div>
+    <div class="row"><input id="spine" type="checkbox"><label for="spine">show spine &amp; knots</label></div>
+    <div class="row"><input id="comb" type="checkbox"><label for="comb">show curvature comb</label></div>
+    <button id="reset">reset</button>
+    <button id="png">save PNG</button>
+  </div>
+  <div id="stage"><canvas id="c" width="640" height="860"></canvas></div>
+</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const cy = 250;   // head centre y in model space
+
+// Base model: ONE spine of knots {x,y,w}.  w = half-width of the body.
+// Upper-head knots lie on a circle (R≈132 about (300,250)); below the equator
+// the width decreases GENTLY and monotonically — an egg/teardrop taper rather
+// than a fat bulb that necks abruptly — then runs out into the curling tail.
+const base = [
+  { x: 300, y: 100, w: 0   },
+  { x: 300, y: 108, w: 36  },
+  { x: 300, y: 118, w: 55  },
+  { x: 300, y: 132, w: 74  },
+  { x: 300, y: 150, w: 92  },
+  { x: 300, y: 172, w: 107 },
+  { x: 300, y: 196, w: 120 },
+  { x: 300, y: 224, w: 129 },
+  { x: 300, y: 250, w: 132 },  // equator — widest (smaller than before)
+  { x: 300, y: 292, w: 121 },  // lower head: gentle, gradual decrease
+  { x: 303, y: 338, w: 102 },
+  { x: 309, y: 392, w: 80  },
+  { x: 320, y: 452, w: 60  },
+  { x: 342, y: 524, w: 44  },
+  { x: 376, y: 608, w: 30  },
+  { x: 420, y: 688, w: 18  },
+  { x: 470, y: 758, w: 9   },
+  { x: 500, y: 810, w: 4   },
+  { x: 468, y: 852, w: 1   },
+];
+
+const P = { head:1, dome:1.2, neck:1, tail:1, len:1, drift:0, hook:0 };
+
+function smoothstep(a, b, x) {
+  let t = (x - a) / (b - a);
+  t = Math.max(0, Math.min(1, t));
+  return t * t * (3 - 2 * t);
+}
+
+// Apply the slider fields to the base knots. Each field is a SMOOTH weight
+// over the spine parameter, so transitions stay continuous (no kinks).
+function shapedKnots() {
+  const n = base.length;
+  return base.map((k, i) => {
+    const iN = i / (n - 1);
+    let { x, y, w } = k;
+
+    const wHead = 1 - smoothstep(0.32, 0.60, iN);          // 1 in head → 0 by neck
+    w *= 1 + (P.head - 1) * wHead;
+    y  = cy + (y - cy) * (1 + (P.head - 1) * wHead);
+
+    const wNeck = Math.exp(-Math.pow((iN - 0.56) / 0.13, 2)); // bump at the neck
+    w *= 1 + (P.neck - 1) * wNeck;
+
+    const wTail = smoothstep(0.50, 1.0, iN);                // ramps over the tail
+    w *= 1 + (P.tail - 1) * wTail;
+    y  = cy + (y - cy) * (1 + (P.len - 1) * wTail);
+    x += P.drift * wTail;
+
+    const wTip = smoothstep(0.78, 1.0, iN);                 // concentrated at the tip
+    x += P.hook * wTip;
+
+    return { x, y, w: Math.max(w, 0) };
+  });
+}
+
+// --- Natural cubic spline (C2) ---
+function naturalCubic(v) {
+  const n = v.length, m = new Array(n).fill(0);
+  if (n < 3) return { v, m };
+  const b = new Array(n).fill(0), c = new Array(n).fill(0), d = new Array(n).fill(0);
+  for (let i = 1; i < n - 1; i++) { b[i] = 4; c[i] = 1; d[i] = 6 * (v[i-1] - 2*v[i] + v[i+1]); }
+  for (let i = 2; i < n - 1; i++) { const f = 1 / b[i-1]; b[i] -= c[i-1]*f; d[i] -= d[i-1]*f; }
+  for (let i = n - 2; i >= 1; i--) m[i] = (d[i] - c[i]*m[i+1]) / b[i];
+  return { v, m };
+}
+function evalCubic(s, tt) {
+  const n = s.v.length; let i = Math.floor(tt);
+  if (i > n - 2) i = n - 2; if (i < 0) i = 0;
+  const t = tt - i, u = 1 - t, { v, m } = s;
+  return v[i]*u + v[i+1]*t + ((u*u*u - u)*m[i] + (t*t*t - t)*m[i+1]) / 6;
+}
+
+const EQ = 8;   // knot index at the head's equator (widest point, y = cy)
+
+function build() {
+  const K = shapedKnots();
+  const sx = naturalCubic(K.map(k => k.x));
+  const sy = naturalCubic(K.map(k => k.y));
+  const sw = naturalCubic(K.map(k => k.w));
+  const N = K.length - 1;
+  const pt = tt => ({ x: evalCubic(sx, tt), y: evalCubic(sy, tt), w: evalCubic(sw, tt) });
+
+  // Body = offset of the spine, but ONLY from the equator down to the tip.
+  // The cusp-prone region above the equator is replaced by a smooth dome.
+  const left = [], right = [], spine = [];
+  const STEP = 0.01, eps = 0.001;
+  for (let tt = EQ; tt <= N + 1e-9; tt += STEP) {
+    const a = pt(Math.min(tt, N));
+    const f = pt(Math.min(tt + eps, N));
+    const g = pt(Math.max(tt - eps, EQ));
+    let dx = f.x - g.x, dy = f.y - g.y;
+    const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
+    const nx = -dy, ny = dx, w = Math.max(a.w, 0);
+    right.push({ x: a.x + nx*w, y: a.y + ny*w });
+    left.push({ x: a.x - nx*w, y: a.y - ny*w });
+    spine.push(a);
+  }
+
+  // Dome over the top: an ellipse centred at the equator spine point, with
+  // horizontal radius = the equator half-width and vertical radius scaled by
+  // P.dome (1 = circle, >1 = taller/gentler ogive). Its base endpoints ARE the
+  // body's equator points and its tangent there is vertical, so it joins the
+  // body seamlessly. We bridge left[0] → over the top → right[0] using the
+  // points' actual ellipse-angles, so it's correct regardless of normal sign.
+  const c = pt(EQ);
+  const eR = Math.hypot(right[0].x - c.x, right[0].y - c.y) || 1;
+  const ang = p => Math.atan2((c.y - p.y) / P.dome, p.x - c.x);  // top → +
+  const aL = ang(left[0]), aR = ang(right[0]);
+  const dome = [];
+  const M = 70;
+  for (let j = 1; j < M; j++) {
+    const a = aL + (aR - aL) * (j / M);          // interpolates through the top
+    dome.push({ x: c.x + eR * Math.cos(a), y: c.y - eR * P.dome * Math.sin(a) });
+  }
+
+  // One closed outline: right edge (equator→tip) → up left edge → dome bridge.
+  // (used for the comb / bbox — it's the true silhouette, no internal seam edge)
+  const outline = right.concat(left.slice().reverse(), dome);
+  const tipIndex = right.length - 1;             // tail tip, for skipping in the comb
+
+  const fullSpine = [];
+  for (let tt = 0; tt <= N + 1e-9; tt += 0.02) fullSpine.push(pt(Math.min(tt, N)));
+
+  return { outline, right, left, dome, tipIndex, spine, fullSpine, knots: K, center: c };
+}
+
+function render() {
+  const m = build();
+  const O = m.outline;
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, gx = 0, gy = 0;
+  for (const p of O) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); gx += p.x; gy += p.y; }
+  gx /= O.length; gy /= O.length;                // centroid, for orienting normals
+  const pad = 60;
+  const s = Math.min((W - 2*pad) / (maxX - minX), (H - 2*pad) / (maxY - minY));
+  const ox = (W - s*(minX + maxX)) / 2, oy = (H - s*(minY + maxY)) / 2;
+  const T = p => ({ x: ox + s*p.x, y: oy + s*p.y });
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  // silhouette — drawn as two OVERLAPPING subpaths (body + dome) filled with
+  // nonzero winding. They share the equator edge, so their union has no
+  // touching boundary there and the scan-fill leaves no hairline seam.
+  ctx.beginPath();
+  // body subpath (auto-closes across the top via left[0]→right[0])
+  let p = T(m.right[0]); ctx.moveTo(p.x, p.y);
+  for (let i = 1; i < m.right.length; i++) { p = T(m.right[i]); ctx.lineTo(p.x, p.y); }
+  for (let i = m.left.length - 1; i >= 0; i--) { p = T(m.left[i]); ctx.lineTo(p.x, p.y); }
+  ctx.closePath();
+  // dome subpath (auto-closes across the same equator edge)
+  p = T(m.left[0]); ctx.moveTo(p.x, p.y);
+  for (let i = 0; i < m.dome.length; i++) { p = T(m.dome[i]); ctx.lineTo(p.x, p.y); }
+  p = T(m.right[0]); ctx.lineTo(p.x, p.y);
+  ctx.closePath();
+  ctx.fillStyle = '#000';
+  ctx.fill('nonzero');
+
+  // curvature comb over the whole boundary. Three-point curvature; quills point
+  // along the outward normal (oriented away from the centroid, so they never
+  // flip); length is clamped; the fine tail tip is skipped.
+  if (document.getElementById('comb').checked) {
+    const n = O.length, lim = 80, K = 2600, sk = 9;   // sk = points skipped each side of the tip
+    ctx.strokeStyle = 'rgba(220,40,40,0.75)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i < n; i += 2) {
+      if (Math.abs(i - m.tipIndex) < sk) continue;     // skip the sharp tip cusp
+      const a = O[(i - 2 + n) % n], b = O[i], c = O[(i + 2) % n];
+      const A = Math.hypot(b.x-a.x, b.y-a.y), Bb = Math.hypot(c.x-b.x, c.y-b.y), C = Math.hypot(c.x-a.x, c.y-a.y);
+      const area = (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
+      const k = (2*area) / (A*Bb*C || 1e-6);
+      let tx = c.x-a.x, ty = c.y-a.y; const L = Math.hypot(tx,ty)||1; tx/=L; ty/=L;
+      let nx = -ty, ny = tx;
+      if ((nx*(b.x-gx) + ny*(b.y-gy)) < 0) { nx = -nx; ny = -ny; }   // outward
+      const mag = Math.max(0, Math.min(lim, Math.abs(k) * K));
+      const t0 = T(b), t1 = T({ x: b.x + nx*mag, y: b.y + ny*mag });
+      ctx.moveTo(t0.x, t0.y); ctx.lineTo(t1.x, t1.y);
+    }
+    ctx.stroke();
+  }
+
+  // spine + knots
+  if (document.getElementById('spine').checked) {
+    ctx.strokeStyle = 'rgba(40,120,255,0.9)'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < m.fullSpine.length; i++) { const p = T(m.fullSpine[i]); i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); }
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(40,120,255,0.9)';
+    for (const k of m.knots) { const p = T(k); ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, 7); ctx.fill(); }
+  }
+}
+
+// --- wire up the controls ---
+const fmt = { head:2, dome:2, neck:2, tail:2, len:2, drift:0, hook:0 };
+['head','dome','neck','tail','len','drift','hook'].forEach(id => {
+  const el = document.getElementById(id), out = document.getElementById('v_' + id);
+  el.addEventListener('input', () => {
+    P[id] = parseFloat(el.value);
+    out.textContent = P[id].toFixed(fmt[id]);
+    render();
+  });
+});
+document.getElementById('spine').addEventListener('change', render);
+document.getElementById('comb').addEventListener('change', render);
+document.getElementById('reset').addEventListener('click', () => {
+  Object.assign(P, { head:1, dome:1.2, neck:1, tail:1, len:1, drift:0, hook:0 });
+  ['head','dome','neck','tail','len','drift','hook'].forEach(id => {
+    const def = { head:1, dome:1.2, neck:1, tail:1, len:1, drift:0, hook:0 }[id];
+    document.getElementById(id).value = def;
+    document.getElementById('v_' + id).textContent = def.toFixed(fmt[id]);
+  });
+  render();
+});
+document.getElementById('png').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.download = 'prince-rupert-drop.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+});
+
+render();
+</script>
+</body>
+</html>
