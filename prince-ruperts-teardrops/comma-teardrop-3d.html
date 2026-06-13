@@ -187,10 +187,6 @@
       <span>Cut</span>
       <input id="cut" name="cut" type="checkbox" checked>
     </label>
-    <label class="row checkbox" for="fringe">
-      <span>Fringe</span>
-      <input id="fringe" name="fringe" type="checkbox">
-    </label>
     <div class="actions">
       <button id="reset" type="button">Reset</button>
       <button id="fit" type="button">Fit</button>
@@ -217,8 +213,7 @@
       quench: 1.10,
       shell: 0.38,
       stress: true,
-      cut: true,
-      fringe: false
+      cut: true
     };
 
     const spineSegments = 190;
@@ -271,17 +266,6 @@
     cutMesh.renderOrder = 2;
     scene.add(cutMesh);
 
-    const coreBoundaryMaterial = new THREE.LineBasicMaterial({
-      color: 0x111111,
-      transparent: true,
-      opacity: 0.62,
-      depthTest: false
-    });
-
-    const coreBoundary = new THREE.LineSegments(new THREE.BufferGeometry(), coreBoundaryMaterial);
-    coreBoundary.renderOrder = 3;
-    scene.add(coreBoundary);
-
     scene.add(new THREE.HemisphereLight(0xffffff, 0xd9d9d9, 1.25));
 
     const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
@@ -310,8 +294,7 @@
         quench: Number(data.get("quench")),
         shell: Number(data.get("shell")),
         stress: data.has("stress"),
-        cut: data.has("cut"),
-        fringe: data.has("fringe")
+        cut: data.has("cut")
       };
     }
 
@@ -343,8 +326,6 @@
       mesh.geometry = model.geometry;
       cutMesh.geometry.dispose();
       cutMesh.geometry = model.cutGeometry;
-      coreBoundary.geometry.dispose();
-      coreBoundary.geometry = model.coreBoundaryGeometry;
       latestFrames = frames;
       window.__stressModel = stressModel;
 
@@ -411,10 +392,7 @@
 
       return {
         geometry,
-        cutGeometry: params.cut ? buildCutGeometry(params, frames, stressModel) : new THREE.BufferGeometry(),
-        coreBoundaryGeometry: params.cut && params.stress ?
-          buildCoreBoundaryGeometry(params, frames, stressModel) :
-          new THREE.BufferGeometry()
+        cutGeometry: params.cut ? buildCutGeometry(params, frames, stressModel) : new THREE.BufferGeometry()
       };
     }
 
@@ -433,7 +411,7 @@
           const rho = Math.abs(across * 2 - 1);
           const point = frame.center.clone().add(frame.normal.clone().multiplyScalar(signedRadius));
           const color = params.stress ?
-            cutStressColor(stressModel.sample(t, rho), params) :
+            stressColor(stressModel.sample(t, rho)) :
             new THREE.Color(0x050505);
 
           positions.push(point.x, point.y, point.z);
@@ -462,65 +440,6 @@
       geometry.setIndex(indices);
       geometry.computeVertexNormals();
       return geometry;
-    }
-
-    function buildCoreBoundaryGeometry(params, frames, stressModel) {
-      const points = [];
-      const boundary = frames.map((frame) => {
-        const rho = zeroStressRho(frame.t, stressModel);
-        if (rho === null) {
-          return null;
-        }
-        return { frame, rho };
-      });
-
-      for (let i = 0; i < boundary.length - 1; i += 1) {
-        const current = boundary[i];
-        const next = boundary[i + 1];
-        if (!current || !next) {
-          continue;
-        }
-
-        [-1, 1].forEach((side) => {
-          points.push(coreBoundaryPoint(current.frame, current.rho, params, side));
-          points.push(coreBoundaryPoint(next.frame, next.rho, params, side));
-        });
-      }
-
-      return new THREE.BufferGeometry().setFromPoints(points);
-    }
-
-    function zeroStressRho(t, stressModel) {
-      const samples = 64;
-      let previousRho = 0;
-      let previousStress = stressModel.sample(t, previousRho);
-      const threshold = 0.75;
-
-      for (let i = 1; i <= samples; i += 1) {
-        const rho = i / samples;
-        const stress = stressModel.sample(t, rho);
-        if (
-          Math.abs(previousStress) > threshold &&
-          Math.abs(stress) > threshold &&
-          ((previousStress > 0 && stress < 0) || (previousStress < 0 && stress > 0))
-        ) {
-          const amount = previousStress === stress ?
-            0 :
-            previousStress / (previousStress - stress);
-          return lerp(previousRho, rho, clamp(amount, 0, 1));
-        }
-        previousRho = rho;
-        previousStress = stress;
-      }
-
-      return null;
-    }
-
-    function coreBoundaryPoint(frame, rho, params, side) {
-      const radius = radiusAt(frame.t, params) * rho * side;
-      return frame.center.clone()
-        .add(frame.normal.clone().multiplyScalar(radius))
-        .add(frame.binormal.clone().multiplyScalar(1.4));
     }
 
     function buildFrames(params) {
@@ -1140,8 +1059,6 @@
       cutMaterial.vertexColors = params.stress;
       cutMaterial.color.set(params.stress ? 0xffffff : 0x050505);
       cutMaterial.needsUpdate = true;
-      coreBoundary.visible = params.cut && params.stress;
-      coreBoundaryMaterial.opacity = params.fringe ? 0.72 : 0.62;
     }
 
     function stressColor(stressMpa) {
@@ -1160,46 +1077,6 @@
         tension,
         smoothstep(0, 420, stressMpa)
       );
-    }
-
-    function cutStressColor(stressMpa, params) {
-      if (params.fringe) {
-        return fringeStressColor(stressMpa);
-      }
-
-      const neutral = new THREE.Color(0xf9e8b6);
-      const compression = new THREE.Color(0x1261d1);
-      const tension = new THREE.Color(0xe31833);
-      if (stressMpa < 0) {
-        return new THREE.Color().lerpColors(
-          neutral,
-          compression,
-          smoothstep(12, 570, -stressMpa)
-        );
-      }
-      return new THREE.Color().lerpColors(
-        neutral,
-        tension,
-        smoothstep(8, 350, stressMpa)
-      );
-    }
-
-    function fringeStressColor(stressMpa) {
-      const magnitude = Math.abs(stressMpa);
-      const signColor = stressMpa < 0 ?
-        new THREE.Color(0x1c6fd8) :
-        new THREE.Color(0xd71934);
-      const pale = new THREE.Color(0xfff2c9);
-      const dark = new THREE.Color(0x23151b);
-      const phase = (magnitude / 78) % 1;
-      const band = 0.5 - 0.5 * Math.cos(phase * Math.PI * 2);
-      const envelope = smoothstep(0, stressMpa < 0 ? 600 : 380, magnitude);
-      const base = new THREE.Color().lerpColors(pale, signColor, envelope);
-
-      if (band < 0.18) {
-        return base.lerp(dark, 0.34 * (1 - band / 0.18));
-      }
-      return base.lerp(pale, 0.22 * band);
     }
 
     function updateCameraBounds() {
@@ -1268,7 +1145,7 @@
     fitButton.addEventListener("click", () => rebuild({ fit: true }));
     window.addEventListener("resize", resize);
 
-    window.__drop3d = { scene, camera, renderer, mesh, cutMesh, coreBoundary, orbit };
+    window.__drop3d = { scene, camera, renderer, mesh, cutMesh, orbit };
 
     resize();
     resetControls();
