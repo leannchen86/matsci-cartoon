@@ -8,6 +8,7 @@ This repo collects small web-based explainers that turn materials-science concep
 
 - `tapioca/` - tapioca ball starch-water microstructure, showing temperature, moisture, and storage-history effects.
 - `prince-ruperts-teardrops/` - Prince Rupert's teardrop residual-stress and fracture demo.
+- `prince-ruperts-teardrops/lab/` - interactive Drop Lab: press anywhere on the drop to apply force and watch the stress heatmap respond; exceed the compression budget (instant at the tail, a long hard press at the head) and the drop disintegrates in a particle explosion.
 
 ## What This Demonstrates
 
