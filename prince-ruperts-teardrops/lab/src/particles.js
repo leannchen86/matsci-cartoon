@@ -9,15 +9,20 @@ attribute vec3 aColor;
 attribute float aBirth;
 attribute float aSize;
 attribute float aLife;
+attribute float aBright;
 
 uniform float uTime;
 uniform float uGravity;
+uniform float uStressColor;
 
 varying vec3 vColor;
 varying float vAlpha;
 
 void main() {
-  vColor = aColor;
+  // Colourless glass dust by default; the residual-stress colours only show in
+  // the analytical (cut/field) views.
+  vec3 glass = vec3(0.52, 0.55, 0.62) * (0.7 + 0.7 * aBright);
+  vColor = mix(glass, aColor, uStressColor);
   float age = uTime - aBirth;
   if (age <= 0.0) {
     vAlpha = 0.0;
@@ -64,6 +69,7 @@ export function createParticles(params, frames, stressModel) {
   const positions = [];
   const velocities = [];
   const colors = [];
+  const brights = [];
   const sizes = [];
   const lives = [];
   const axialT = [];
@@ -114,6 +120,7 @@ export function createParticles(params, frames, stressModel) {
         Math.min(color.g * tint, 1),
         Math.min(color.b * tint, 1)
       );
+      brights.push(tint);
       sizes.push(5 + Math.random() * 9 + 4 * Math.min(Math.abs(stress) / 650, 1));
       lives.push(EXPLOSION.lifeMin + Math.random() * (EXPLOSION.lifeMax - EXPLOSION.lifeMin));
       axialT.push(frame.t);
@@ -125,6 +132,7 @@ export function createParticles(params, frames, stressModel) {
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute("aVelocity", new THREE.Float32BufferAttribute(velocities, 3));
   geometry.setAttribute("aColor", new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setAttribute("aBright", new THREE.Float32BufferAttribute(brights, 1));
   geometry.setAttribute("aSize", new THREE.Float32BufferAttribute(sizes, 1));
   geometry.setAttribute("aLife", new THREE.Float32BufferAttribute(lives, 1));
   geometry.setAttribute("aBirth", new THREE.BufferAttribute(birth, 1));
@@ -132,7 +140,8 @@ export function createParticles(params, frames, stressModel) {
   const material = new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
-      uGravity: { value: EXPLOSION.gravity }
+      uGravity: { value: EXPLOSION.gravity },
+      uStressColor: { value: 1 }
     },
     vertexShader: particleVertexShader,
     fragmentShader: particleFragmentShader,
@@ -147,12 +156,13 @@ export function createParticles(params, frames, stressModel) {
 
   return {
     points,
-    prime(breakT, frontSpeed) {
+    prime(breakT, frontSpeed, stressColor = 1) {
       const attribute = geometry.getAttribute("aBirth");
       for (let i = 0; i < axialT.length; i += 1) {
         attribute.array[i] = Math.abs(axialT[i] - breakT) / frontSpeed;
       }
       attribute.needsUpdate = true;
+      material.uniforms.uStressColor.value = stressColor;
       material.uniforms.uTime.value = 0;
       points.visible = true;
     },

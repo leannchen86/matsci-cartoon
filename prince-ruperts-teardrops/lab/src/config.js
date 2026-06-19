@@ -12,11 +12,17 @@ export const SHAPE = {
 };
 
 export const PHYSICS = {
-  // Net surface tension needed to start a crack at a flaw.
+  // Net surface tension needed to nucleate a crack at a surface flaw.
   strengthMPa: 90,
-  // Peak applied tension (Hertzian ring) at full force, before residual offset.
-  maxTensionPeakMPa: 1150,
-  forceExponent: 0.7,
+  // Peak of the applied Hertzian tensile ring at full force. Set high so a hard
+  // press builds a dramatic local gradient AND, at the very top of the range,
+  // can finally overcome the head's deep residual compression (~540 MPa) to
+  // crack the bulb. The tail (residual ~0) cracks at the lightest touch — same
+  // mechanism, vastly less force. maxAppliedTension() ~ 0.71 x this.
+  maxTensionPeakMPa: 915,
+  // Low exponent => force ramps in fast at the bottom (tail cracks instantly),
+  // so the whole upper range is "pressing harder and harder" on the bulb.
+  forceExponent: 0.61,
   // Contact patch radius in world units at full force.
   contactRadius: 26,
   holdRampSeconds: 2.6,
@@ -24,8 +30,10 @@ export const PHYSICS = {
 };
 
 export const EXPLOSION = {
-  // Real-time seconds for the crack front to consume the whole drop at 1x.
-  frontSeconds: 0.5,
+  // Sim-time for the fragmentation front to consume the whole drop. Real Prince
+  // Rupert fracture runs at ~1.5 km/s — near-instant — so this is short: the
+  // drop bursts almost all at once, with only a faint sweep from the break.
+  frontSeconds: 0.12,
   gravity: 420,
   particlesPerFrame: 150,
   lifeMin: 2.2,

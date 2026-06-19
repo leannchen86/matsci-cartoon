@@ -42,7 +42,9 @@ export function createSharedUniforms(stressTexture, stressModel) {
     uA: { value: 1 },
     uBroken: { value: 0 },
     uBreakT: { value: 0 },
-    uFrontT: { value: 0 }
+    uFrontT: { value: 0 },
+    uCriticality: { value: 0 },
+    uReveal: { value: 1 }
   };
 }
 
@@ -71,6 +73,8 @@ uniform float uA;
 uniform float uBroken;
 uniform float uBreakT;
 uniform float uFrontT;
+uniform float uCriticality;
+uniform float uReveal;
 
 varying vec3 vWorld;
 varying vec3 vNormal;
@@ -107,6 +111,14 @@ void main() {
   }
 
   vec3 col = stressColor(s);
+
+  // As the contact nears failure, tensile regions flush hot-white — the stored
+  // tension responding, about to release.
+  float crit = smoothstep(0.5, 1.0, uCriticality) * smoothstep(0.0, 80.0, s);
+  col = mix(col, vec3(1.0, 0.93, 0.78), crit * 0.5);
+
+  // Reveal fade-in: the stress colours bloom out of glassy white when you cut.
+  col = mix(vec3(0.97, 0.97, 0.98), col, uReveal);
 
 #ifdef CUT_PLANE
   gl_FragColor = vec4(col, 1.0);
