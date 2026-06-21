@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { SHAPE, PHYSICS, EXPLOSION } from "./config.js";
 import { buildFrames, buildSurfaceGeometry, buildCutPlaneGeometry, radiusAt } from "./geometry.js";
 import { buildStressModel } from "./stressModel.js";
@@ -51,16 +50,47 @@ const cutPlaneGeometry = buildCutPlaneGeometry(SHAPE, frames);
 // on the cut cross-section.
 const heatMaterial = createDropMaterial(uniforms, false);
 
-// Soft studio environment so the clear glass has something to reflect/refract,
-// plus key/rim lights for the bright glassy highlight streaks.
-const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.02).texture;
+// Environment the clear glass reflects/refracts. A soft studio base with a
+// restrained cyberpunk lean — a cyan zone on one side, magenta on the other —
+// so the glass picks up neon glints without going dark or loud.
+function makeCyberEnvironment() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  const base = ctx.createLinearGradient(0, 0, 0, 256);
+  base.addColorStop(0, "#e8edf6");
+  base.addColorStop(1, "#ffffff");
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, 512, 256);
 
-const keyLight = new THREE.DirectionalLight(0xffffff, 2.6);
+  const glow = (x, y, r, color) => {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, color);
+    g.addColorStop(1, color.replace(/[\d.]+\)$/, "0)"));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 512, 256);
+  };
+  glow(150, 88, 175, "rgba(38, 208, 255, 0.65)");  // cyan
+  glow(388, 172, 185, "rgba(255, 64, 208, 0.5)");  // magenta
+  glow(300, 36, 130, "rgba(150, 120, 255, 0.32)"); // violet up top
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.mapping = THREE.EquirectangularReflectionMapping;
+  return texture;
+}
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromEquirectangular(makeCyberEnvironment()).texture;
+
+const keyLight = new THREE.DirectionalLight(0xffffff, 2.3);
 keyLight.position.set(1.0, 1.6, 2.0);
-const rimLight = new THREE.DirectionalLight(0xcfe0ff, 1.4);
-rimLight.position.set(-1.6, -0.4, -1.2);
-scene.add(keyLight, rimLight);
+// A restrained cyberpunk accent: cyan glint on one flank, magenta on the other.
+const cyanLight = new THREE.DirectionalLight(0x1fd8ff, 1.7);
+cyanLight.position.set(-1.5, 1.1, 1.0);
+const magentaLight = new THREE.DirectionalLight(0xff3ddb, 1.5);
+magentaLight.position.set(-1.4, -0.6, -1.2);
+scene.add(keyLight, cyanLight, magentaLight);
 
 const glassMaterial = new THREE.MeshPhysicalMaterial({
   color: 0xffffff,
@@ -182,8 +212,8 @@ const skyMaterial = new THREE.ShaderMaterial({
   side: THREE.BackSide,
   depthWrite: false,
   uniforms: {
-    uTop: { value: new THREE.Color(0xdbe3ee) },
-    uBottom: { value: new THREE.Color(0xffffff) }
+    uTop: { value: new THREE.Color(0xcdd6ee) },
+    uBottom: { value: new THREE.Color(0xfbf4f8) }
   },
   vertexShader: /* glsl */ `
     varying vec3 vDir;
